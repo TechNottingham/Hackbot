@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/TechNottingham/Hackbot.png?label=ready&title=Ready)](https://waffle.io/TechNottingham/Hackbot)
 # hackbot
 
 hackbot is a chat bot built on the [Hubot][hubot] framework. It was
