@@ -2,7 +2,7 @@ module.exports = (robot) ->
 
   robot.respond /can you see the api\??/i, (response) ->
     response.reply "I'll have a quick look for you Sir..."
-    robot.http("http://api.hack24.co.uk/teams")
+    robot.http("#{process.env.HACK24API_URL}/api")
       .get() (err, res, body) ->
         if res.statusCode isnt 200
           response.reply "I'm sorry Sir, there appears to be a problem; something about \"#{res.statusCode}\""
