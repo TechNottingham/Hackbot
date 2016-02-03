@@ -11,3 +11,8 @@ module.exports = (robot) ->
 
   robot.respond /what are your prime directives\??/i, (response) ->
     response.reply "1. Serve the public trust\n2. Protect the innocent hackers\n3. Uphold the Code of Conduct\n4. [Classified]"
+    
+  robot.respond /my id/i, (response) ->
+    response.reply "Your id is #{response.message.user.id}"
+
+  robot
