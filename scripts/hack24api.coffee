@@ -14,5 +14,3 @@ module.exports = (robot) ->
     
   robot.respond /my id/i, (response) ->
     response.reply "Your id is #{response.message.user.id}"
-
-  robot
