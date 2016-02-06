@@ -82,21 +82,62 @@ describe 'hack24api script', ->
     it 'should create the team with this user as the only member, and reply with a welcome message', ->
       apiUrl = process.env.HACK24API_URL = 'any url to the API'
       
+      getExecStub = sinon.stub()
+      getStub = sinon.stub()
+      getStub.returns getExecStub
+      
       postExecStub = sinon.stub()
       postStub = sinon.stub()
-      headerStub = sinon.stub().returns { post: postStub }
+      headerStub = sinon.stub().returns { post: postStub, get: getStub }
       postStub.returns postExecStub
       
       http = @room.robot.http = sinon.stub()
       http.returns { header: headerStub }
       
+      userResponse = JSON.stringify
+        id: 'bob'
+      
+      getExecStub.callsArgWith(0, null, null, userResponse)
       postExecStub.callsArgWith(0, null, null, null)
       
       @room.user.say('bob', '@hubot create team Pineapple Express').then =>
+        expect(http).to.have.been.calledWith("#{apiUrl}/users/bob")
+        expect(headerStub).to.have.been.calledWith('Accept', 'application/json')
+        
         expect(http).to.have.been.calledWith("#{apiUrl}/teams")
         expect(headerStub).to.have.been.calledWith('Content-Type', 'application/json')
+        
         expect(postStub).to.have.been.calledWith('{"name":"Pineapple Express","members":["bob"]}')
         expect(@room.messages).to.eql [
           ['bob', '@hubot create team Pineapple Express'],
           ['hubot', "@bob Welcome to team Pineapple Express!"]
+        ]
+
+  describe 'hubot tries to create a team for a user already in a team', ->
+
+    it 'should respond to the user that they cannot be in more than one team', ->
+      apiUrl = process.env.HACK24API_URL = 'any url to the API'
+      
+      getExecStub = sinon.stub()
+      getStub = sinon.stub()
+      getStub.returns getExecStub
+      
+      headerStub = sinon.stub().returns { get: getStub }
+      
+      http = @room.robot.http = sinon.stub()
+      http.returns { header: headerStub }
+      
+      userResponse = JSON.stringify
+        id: 'barry'
+        team: 'Pineapple Express'
+      
+      getExecStub.callsArgWith(0, null, null, userResponse)
+      
+      @room.user.say('barry', '@hubot create team Bobby Dazzlers').then =>
+        expect(http).to.have.been.calledWith("#{apiUrl}/users/barry")
+        expect(headerStub).to.have.been.calledWith('Accept', 'application/json')
+        
+        expect(@room.messages).to.eql [
+          ['barry', '@hubot create team Bobby Dazzlers'],
+          ['hubot', "@barry You're already a member of Pineapple Express!"]
         ]

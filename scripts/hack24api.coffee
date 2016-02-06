@@ -33,12 +33,21 @@ module.exports = (robot) ->
   robot.respond /create team (.*)/i, (response) ->
     userId = response.message.user.id
     teamName = response.match[1]
-    
-    teamJSON = JSON.stringify 
-      name: teamName
-      members: [ userId ]
         
-    robot.http("#{process.env.HACK24API_URL}/teams")
-      .header('Content-Type', 'application/json')
-      .post(teamJSON) (err, res, body) ->
-        response.reply "Welcome to team #{teamName}!"
+    robot.http("#{process.env.HACK24API_URL}/users/#{response.message.user.id}")
+      .header('Accept', 'application/json')
+      .get() (err, res, body) ->
+        userResponse = JSON.parse body
+        
+        if (userResponse.team?)
+          response.reply "You're already a member of #{userResponse.team}!"
+          return
+    
+        teamJSON = JSON.stringify 
+          name: teamName
+          members: [ userId ]
+            
+        robot.http("#{process.env.HACK24API_URL}/teams")
+          .header('Content-Type', 'application/json')
+          .post(teamJSON) (err, res, body) ->
+            response.reply "Welcome to team #{teamName}!"
