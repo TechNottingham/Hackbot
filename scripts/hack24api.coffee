@@ -39,7 +39,7 @@ module.exports = (robot) ->
       .get() (err, res, body) ->
         userResponse = JSON.parse body
         
-        if (userResponse.team?)
+        if userResponse.team?
           response.reply "You're already a member of #{userResponse.team}!"
           return
     
@@ -50,4 +50,7 @@ module.exports = (robot) ->
         robot.http("#{process.env.HACK24API_URL}/teams")
           .header('Content-Type', 'application/json')
           .post(teamJSON) (err, res, body) ->
+            if res.statusCode is 409
+              return response.reply "Sorry, but that team already exists!"
+              
             response.reply "Welcome to team #{teamName}!"

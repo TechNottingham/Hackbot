@@ -98,7 +98,7 @@ describe 'hack24api script', ->
         id: 'bob'
       
       getExecStub.callsArgWith(0, null, null, userResponse)
-      postExecStub.callsArgWith(0, null, null, null)
+      postExecStub.callsArgWith(0, null, { statusCode: 201 }, null)
       
       @room.user.say('bob', '@hubot create team Pineapple Express').then =>
         expect(http).to.have.been.calledWith("#{apiUrl}/users/bob")
@@ -108,6 +108,7 @@ describe 'hack24api script', ->
         expect(headerStub).to.have.been.calledWith('Content-Type', 'application/json')
         
         expect(postStub).to.have.been.calledWith('{"name":"Pineapple Express","members":["bob"]}')
+        
         expect(@room.messages).to.eql [
           ['bob', '@hubot create team Pineapple Express'],
           ['hubot', "@bob Welcome to team Pineapple Express!"]
@@ -140,4 +141,33 @@ describe 'hack24api script', ->
         expect(@room.messages).to.eql [
           ['barry', '@hubot create team Bobby Dazzlers'],
           ['hubot', "@barry You're already a member of Pineapple Express!"]
+        ]
+
+  describe 'hubot tries to create a team which already exists', ->
+
+    it 'should reject the action and tell the user that the team already exists', ->
+      apiUrl = process.env.HACK24API_URL = 'any url to the API'
+      
+      getExecStub = sinon.stub()
+      getStub = sinon.stub()
+      getStub.returns getExecStub
+      
+      postExecStub = sinon.stub()
+      postStub = sinon.stub()
+      headerStub = sinon.stub().returns { post: postStub, get: getStub }
+      postStub.returns postExecStub
+      
+      http = @room.robot.http = sinon.stub()
+      http.returns { header: headerStub }
+      
+      userResponse = JSON.stringify
+        id: 'jerry'
+      
+      getExecStub.callsArgWith(0, null, null, userResponse)
+      postExecStub.callsArgWith(0, null, { statusCode: 409 }, null)
+      
+      @room.user.say('jerry', '@hubot create team Top Bants').then =>
+        expect(@room.messages).to.eql [
+          ['jerry', '@hubot create team Top Bants'],
+            ['hubot', "@jerry Sorry, but that team already exists!"]
         ]
