@@ -1,5 +1,17 @@
-module.exports = (robot) ->
+# Description:
+#   Self service team and user administration scripts.
+#
+# Configuration:
+#   HACK24API_URL
+#
+# Commands:
+#   hubot can you see the api? - checks if the API is visible
+#
+# Author:
+#   codesleuth
+#
 
+module.exports = (robot) ->
   robot.respond /can you see the api\??/i, (response) ->
     response.reply "I'll have a quick look for you Sir..."
     robot.http("#{process.env.HACK24API_URL}/api")
@@ -13,4 +25,7 @@ module.exports = (robot) ->
     response.reply "1. Serve the public trust\n2. Protect the innocent hackers\n3. Uphold the Code of Conduct\n4. [Classified]"
     
   robot.respond /my id/i, (response) ->
+    response.reply "Your id is #{response.message.user.id}"
+    
+  robot.respond /create team (.*)/i, (response) ->
     response.reply "Your id is #{response.message.user.id}"

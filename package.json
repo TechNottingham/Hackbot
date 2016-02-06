@@ -24,7 +24,7 @@
     "hubot-slack": "^3.4.2"
   },
   "engines": {
-    "node": "0.10.x"
+    "node": "5.4.x"
   },
   "devDependencies": {
     "chai": "^3.5.0",

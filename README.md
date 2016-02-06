@@ -1,3 +1,5 @@
+[![Build Status](https://semaphoreci.com/api/v1/codesleuth/hackbot/branches/master/badge.svg)](https://semaphoreci.com/codesleuth/hackbot)
+
 # hackbot
 
 hackbot is a chat bot built on the [Hubot][hubot] framework. It was
