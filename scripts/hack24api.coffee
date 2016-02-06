@@ -14,6 +14,27 @@
 #   codesleuth
 #
 
+createTeam = (http, teamName, userId, callback) ->
+  body = JSON.stringify 
+    name: teamName
+    members: [ userId ]
+      
+  http("#{process.env.HACK24API_URL}/teams")
+    .header('Content-Type', 'application/json')
+    .post(body) (err, res, body) ->
+      callback res.statusCode
+
+createUser = (http, userId, userName, callback) ->
+  body = JSON.stringify 
+    id: userId
+    name: userName
+      
+  http("#{process.env.HACK24API_URL}/users")
+    .header('Content-Type', 'application/json')
+    .post(body) (err, res, body) ->
+      callback res.statusCode
+
+
 module.exports = (robot) ->
   robot.respond /can you see the api\??/i, (response) ->
     response.reply "I'll have a quick look for you Sir..."
@@ -32,25 +53,35 @@ module.exports = (robot) ->
 
   robot.respond /create team (.*)/i, (response) ->
     userId = response.message.user.id
+    userName = response.message.user.name
     teamName = response.match[1]
         
-    robot.http("#{process.env.HACK24API_URL}/users/#{response.message.user.id}")
+    robot.http("#{process.env.HACK24API_URL}/users/#{userId}")
       .header('Accept', 'application/json')
       .get() (err, res, body) ->
-        userResponse = JSON.parse body
+      
+        if res.statusCode is 404
+          userJson = JSON.stringify
+            id: userId
+          
+          createUser robot.http, userId, userName, (statusCode) ->
+            createTeam robot.http, teamName, userId, (statusCode) ->
+              if statusCode is 409
+                return response.reply "Sorry, but that team already exists!"
+                
+              response.reply "Welcome to team #{teamName}!"
+              
+        else
         
-        if userResponse.team?
-          response.reply "You're already a member of #{userResponse.team}!"
-          return
-    
-        teamJSON = JSON.stringify 
-          name: teamName
-          members: [ userId ]
-            
-        robot.http("#{process.env.HACK24API_URL}/teams")
-          .header('Content-Type', 'application/json')
-          .post(teamJSON) (err, res, body) ->
-            if res.statusCode is 409
+          userResponse = JSON.parse body
+        
+          if userResponse.team?
+            response.reply "You're already a member of #{userResponse.team}!"
+            return
+          
+          createTeam robot.http, teamName, userId, (statusCode) ->
+            if statusCode is 409
               return response.reply "Sorry, but that team already exists!"
               
             response.reply "Welcome to team #{teamName}!"
+        
