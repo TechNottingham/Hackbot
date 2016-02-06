@@ -58,3 +58,21 @@ describe 'hack24api script', ->
           ['hubot', "@bob I'll have a quick look for you Sir..."],
           ['hubot', '@bob I\'m sorry Sir, there appears to be a problem; something about "99"']
         ]
+
+  describe 'hubot cites his prime directives', ->
+
+    it 'should reply to the user the prime directives', ->
+      @room.user.say('bob', '@hubot what are your prime directives?').then =>
+        expect(@room.messages).to.eql [
+          ['bob', '@hubot what are your prime directives?'],
+          ['hubot', "@bob 1. Serve the public trust\n2. Protect the innocent hackers\n3. Uphold the Code of Conduct\n4. [Classified]"]
+        ]
+
+  describe 'hubot tells the user their id', ->
+
+    it 'should reply to the user with their identifier', ->
+      @room.user.say('bob', '@hubot my id').then =>
+        expect(@room.messages).to.eql [
+          ['bob', '@hubot my id'],
+          ['hubot', "@bob Your id is bob"]
+        ]
