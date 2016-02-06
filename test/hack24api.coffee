@@ -76,3 +76,27 @@ describe 'hack24api script', ->
           ['bob', '@hubot my id'],
           ['hubot', "@bob Your id is bob"]
         ]
+
+  describe 'hubot creates a team and adds the user to the team', ->
+
+    it 'should create the team with this user as the only member, and reply with a welcome message', ->
+      apiUrl = process.env.HACK24API_URL = 'any url to the API'
+      
+      postExecStub = sinon.stub()
+      postStub = sinon.stub()
+      headerStub = sinon.stub().returns { post: postStub }
+      postStub.returns postExecStub
+      
+      http = @room.robot.http = sinon.stub()
+      http.returns { header: headerStub }
+      
+      postExecStub.callsArgWith(0, null, null, null)
+      
+      @room.user.say('bob', '@hubot create team Pineapple Express').then =>
+        expect(http).to.have.been.calledWith("#{apiUrl}/teams")
+        expect(headerStub).to.have.been.calledWith('Content-Type', 'application/json')
+        expect(postStub).to.have.been.calledWith('{"name":"Pineapple Express","members":["bob"]}')
+        expect(@room.messages).to.eql [
+          ['bob', '@hubot create team Pineapple Express'],
+          ['hubot', "@bob Welcome to team Pineapple Express!"]
+        ]
