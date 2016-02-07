@@ -47,6 +47,9 @@ module.exports = (robot) ->
           
           Client.createUser(robot, userId, userName)
             .then (statusCode) ->
+              if statusCode isnt 200
+                return response.reply 'Sorry, I can\'t create your user account :frowning:'
+                
               Client.createTeam(robot, teamName, userId)
                 .then (statusCode) ->
                   if statusCode is 409

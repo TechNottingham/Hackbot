@@ -232,3 +232,32 @@ describe 'hack24api script', ->
           ['sarah', '@hubot create team Pineapple Express'],
           ['hubot', "@sarah Welcome to team Pineapple Express!"]
         ]
+
+  describe 'hubot can\'t create user when trying to create team', ->
+
+    it 'should respond with a failure message', ->
+      apiUrl = process.env.HACK24API_URL = 'any url to the API'
+      
+      usersGetExecStub = sinon.stub()
+      usersGetStub = sinon.stub()
+      usersGetStub.returns usersGetExecStub
+      
+      usersPostExecStub = sinon.stub()
+      usersPostStub = sinon.stub()
+      usersPostStub.returns usersPostExecStub
+      
+      usersGetHeadersStub = sinon.stub().returns { get: usersGetStub }
+      usersPostHeadersStub = sinon.stub().returns { post: usersPostStub }
+      
+      http = @room.robot.http = sinon.stub()
+      http.withArgs("#{apiUrl}/users/sarah").returns { header: usersGetHeadersStub }
+      http.withArgs("#{apiUrl}/users").returns { header: usersPostHeadersStub }
+      
+      usersGetExecStub.callsArgWith(0, null, { statusCode: 404 }, null)
+      usersPostExecStub.callsArgWith(0, null, { statusCode: 54 }, null)
+      
+      @room.user.say('sarah', '@hubot create team :melon:').then =>
+        expect(@room.messages).to.eql [
+          ['sarah', '@hubot create team :melon:'],
+          ['hubot', "@sarah Sorry, I can't create your user account :frowning:"]
+        ]
