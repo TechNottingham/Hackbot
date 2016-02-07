@@ -15,7 +15,7 @@ class Client
   @createUser: (robot, userId, userName) ->
     new Promise (resolve, reject) ->
       body = JSON.stringify 
-        id: userId
+        userid: userId
         name: userName
           
       robot.http("#{process.env.HACK24API_URL}/users")
@@ -38,8 +38,8 @@ class Client
         .header('Accept', 'application/json')
         .get() (err, res, body) ->
           if err? then return reject err
-          resolve
-            statusCode: res.statusCode
-            user: if res.statusCode is 200 then JSON.parse body
+          result = { statusCode: res.statusCode }
+          if res.statusCode is 200 then result.user = JSON.parse(body)
+          resolve(result)
 
 module.exports.Client = Client

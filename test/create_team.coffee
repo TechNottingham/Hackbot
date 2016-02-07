@@ -147,7 +147,7 @@ describe 'Create team', ->
         
         expect(teamsHeadersStub).to.have.been.calledWith('Content-Type', 'application/json')
         
-        expect(usersPostStub).to.have.been.calledWith('{"id":"sarah","name":"sarah"}')
+        expect(usersPostStub).to.have.been.calledWith('{"userid":"sarah","name":"sarah"}')
         expect(teamsPostStub).to.have.been.calledWith('{"name":"Pineapple Express","members":["sarah"]}')
         
         expect(@room.messages).to.eql [

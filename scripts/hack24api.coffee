@@ -42,9 +42,6 @@ module.exports = (robot) ->
       .then (res) ->
       
         if res.statusCode is 404
-          userJson = JSON.stringify
-            id: userId
-          
           Client.createUser(robot, userId, userName)
             .then (statusCode) ->
               if statusCode isnt 200
