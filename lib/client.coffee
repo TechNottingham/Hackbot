@@ -1,40 +1,40 @@
 class Client
 
-  @createTeam: (http, teamName, userId) ->
+  @createTeam: (robot, teamName, userId) ->
     new Promise (resolve, reject) ->
       body = JSON.stringify 
         name: teamName
         members: [ userId ]
         
-      http("#{process.env.HACK24API_URL}/teams")
+      robot.http("#{process.env.HACK24API_URL}/teams")
         .header('Content-Type', 'application/json')
         .post(body) (err, res, body) ->
           if err? then return reject err
           resolve res.statusCode
 
-  @createUser: (http, userId, userName) ->
+  @createUser: (robot, userId, userName) ->
     new Promise (resolve, reject) ->
       body = JSON.stringify 
         id: userId
         name: userName
           
-      http("#{process.env.HACK24API_URL}/users")
+      robot.http("#{process.env.HACK24API_URL}/users")
         .header('Content-Type', 'application/json')
         .post(body) (err, res, body) ->
           if err? then return reject err
           resolve res.statusCode
   
-  @checkApi: (http) ->
+  @checkApi: (robot) ->
     new Promise (resolve, reject) ->
-      http("#{process.env.HACK24API_URL}/api")
+      robot.http("#{process.env.HACK24API_URL}/api")
         .get() (err, res, body) ->
           if err? then return reject err
           resolve(res.statusCode)
         
         
-  @getUser: (http, userId) ->
+  @getUser: (robot, userId) ->
     new Promise (resolve, reject) ->
-      http("#{process.env.HACK24API_URL}/users/#{userId}")
+      robot.http("#{process.env.HACK24API_URL}/users/#{userId}")
         .header('Accept', 'application/json')
         .get() (err, res, body) ->
           if err? then return reject err
