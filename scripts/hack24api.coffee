@@ -24,6 +24,7 @@ module.exports = (robot) ->
       .then (statusCode) ->
         response.reply if statusCode is 200 then 'I see her!' else "I'm sorry Sir, there appears to be a problem; something about \"#{statusCode}\""
       .catch (err) ->
+        console.error 'Cannot see the API: ', err
         response.reply 'I\'m sorry Sir, there appears to be a big problem!'
 
   robot.respond /what are your prime directives\??/i, (response) ->
