@@ -53,7 +53,10 @@ module.exports = (robot) ->
               Client.createTeam(robot, teamName, userId)
                 .then (statusCode) ->
                   if statusCode is 409
-                    return response.reply "Sorry, but that team already exists!"
+                    return response.reply 'Sorry, but that team already exists!'
+                    
+                  if statusCode isnt 200
+                    return response.reply 'Sorry, I can\'t create your team :frowning:'
                     
                   response.reply "Welcome to team #{teamName}!"
               

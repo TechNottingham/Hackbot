@@ -261,3 +261,40 @@ describe 'hack24api script', ->
           ['sarah', '@hubot create team :melon:'],
           ['hubot', "@sarah Sorry, I can't create your user account :frowning:"]
         ]
+
+  describe 'hubot creates the user, but cannot create the team, even though it is unique', ->
+
+    it 'should create the user, but respond with a message when create team fails', ->
+      apiUrl = process.env.HACK24API_URL = 'any url to the API'
+      
+      usersGetExecStub = sinon.stub()
+      usersGetStub = sinon.stub()
+      usersGetStub.returns usersGetExecStub
+      
+      usersPostExecStub = sinon.stub()
+      usersPostStub = sinon.stub()
+      usersPostStub.returns usersPostExecStub
+      
+      teamsPostExecStub = sinon.stub()
+      teamsPostStub = sinon.stub()
+      teamsPostStub.returns teamsPostExecStub
+      
+      usersGetHeadersStub = sinon.stub().returns { get: usersGetStub }
+      usersPostHeadersStub = sinon.stub().returns { post: usersPostStub }
+      teamsHeadersStub = sinon.stub().returns { post: teamsPostStub }
+      
+      http = @room.robot.http = sinon.stub()
+      http.withArgs("#{apiUrl}/users/sarah").returns { header: usersGetHeadersStub }
+      http.withArgs("#{apiUrl}/users").returns { header: usersPostHeadersStub }
+      http.withArgs("#{apiUrl}/teams").returns { header: teamsHeadersStub }
+      
+      usersGetExecStub.callsArgWith(0, null, { statusCode: 404 }, null)
+      usersPostExecStub.callsArgWith(0, null, { statusCode: 200 }, null)
+      
+      teamsPostExecStub.callsArgWith(0, null, { statusCode: 404 }, null)
+      
+      @room.user.say('sarah', '@hubot create team Whizzbang').then =>
+        expect(@room.messages).to.eql [
+          ['sarah', '@hubot create team Whizzbang'],
+          ['hubot', "@sarah Sorry, I can't create your team :frowning:"]
+        ]
