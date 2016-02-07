@@ -22,7 +22,7 @@ describe 'hack24api script', ->
       
       getExec = sinon.stub()
       get = sinon.stub().returns(getExec)
-      getExec.callsArgWith(0, null, { statusCode: 200 }, '')
+      getExec.callsArgWith(0, null, { statusCode: 200 }, null)
       
       http = @room.robot.http = sinon.stub()
       http.returns { get: get }
@@ -40,11 +40,9 @@ describe 'hack24api script', ->
     it 'should reply to the user that he cannot see the API', ->
       apiUrl = process.env.HACK24API_URL = 'any url to he API'
       
-      res = { statusCode: 99 }
-      
       getExec = sinon.stub()
       get = sinon.stub().returns(getExec)
-      getExec.callsArgWith(0, null, res, '')
+      getExec.callsArgWith(0, null, { statusCode: 99 }, '')
       
       http = @room.robot.http = sinon.stub()
       http.returns { get: get }
@@ -55,6 +53,26 @@ describe 'hack24api script', ->
           ['bob', '@hubot can you see the api?'],
           ['hubot', "@bob I'll have a quick look for you Sir..."],
           ['hubot', '@bob I\'m sorry Sir, there appears to be a problem; something about "99"']
+        ]
+
+  describe 'hubot is unable to see the API because of a http error', ->
+
+    it 'should reply to the user that he cannot see the API because of a bit problem', ->
+      apiUrl = process.env.HACK24API_URL = 'any url to he API'
+      
+      getExec = sinon.stub()
+      get = sinon.stub().returns(getExec)
+      getExec.callsArgWith(0, 'massive problem')
+      
+      http = @room.robot.http = sinon.stub()
+      http.returns { get: get }
+      
+      @room.user.say('bob', '@hubot can you see the api?').then =>
+        expect(http).to.have.been.calledWith("#{apiUrl}/api")
+        expect(@room.messages).to.eql [
+          ['bob', '@hubot can you see the api?'],
+          ['hubot', "@bob I'll have a quick look for you Sir..."],
+          ['hubot', '@bob I\'m sorry Sir, there appears to be a big problem!']
         ]
 
   describe 'hubot cites his prime directives', ->

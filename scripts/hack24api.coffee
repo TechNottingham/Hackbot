@@ -20,8 +20,11 @@ module.exports = (robot) ->
 
   robot.respond /can you see the api\??/i, (response) ->
     response.reply "I'll have a quick look for you Sir..."
-    Client.checkApi robot.http, (statusCode) ->
-      response.reply if statusCode is 200 then 'I see her!' else "I'm sorry Sir, there appears to be a problem; something about \"#{statusCode}\""
+    Client.checkApi(robot.http)
+      .then (statusCode) ->
+        response.reply if statusCode is 200 then 'I see her!' else "I'm sorry Sir, there appears to be a problem; something about \"#{statusCode}\""
+      .catch (err) ->
+        response.reply 'I\'m sorry Sir, there appears to be a big problem!'
 
   robot.respond /what are your prime directives\??/i, (response) ->
     response.reply "1. Serve the public trust\n2. Protect the innocent hackers\n3. Uphold the Code of Conduct\n4. [Classified]"
@@ -34,28 +37,34 @@ module.exports = (robot) ->
     userName = response.message.user.name
     teamName = response.match[1]
     
-    Client.getUser robot.http, userId, (statusCode, userResponse) ->
+    Client.getUser robot.http, userId
+      .then (res) ->
       
-      if statusCode is 404
-        userJson = JSON.stringify
-          id: userId
-        
-        Client.createUser robot.http, userId, userName, (statusCode) ->
-          Client.createTeam robot.http, teamName, userId, (statusCode) ->
-            if statusCode is 409
-              return response.reply "Sorry, but that team already exists!"
+        if res.statusCode is 404
+          userJson = JSON.stringify
+            id: userId
+          
+          Client.createUser robot.http, userId, userName
+            .then (statusCode) ->
+              Client.createTeam robot.http, teamName, userId
+                .then (statusCode) ->
+                  if statusCode is 409
+                    return response.reply "Sorry, but that team already exists!"
+                    
+                  response.reply "Welcome to team #{teamName}!"
               
-            response.reply "Welcome to team #{teamName}!"
-            
-      else
-      
-        if userResponse.team isnt undefined
-          response.reply "You're already a member of #{userResponse.team}!"
-          return
+        else
         
-        Client.createTeam robot.http, teamName, userId, (statusCode) ->
-          if statusCode is 409
-            return response.reply "Sorry, but that team already exists!"
+          if res.user.team isnt undefined
+            response.reply "You're already a member of #{res.user.team}!"
+            return
+          
+          Client.createTeam robot.http, teamName, userId
+            .then (statusCode) ->
+              if statusCode is 409
+                return response.reply "Sorry, but that team already exists!"
+                
+              response.reply "Welcome to team #{teamName}!"
             
-          response.reply "Welcome to team #{teamName}!"
-        
+      .catch (err) ->
+        console.log err
