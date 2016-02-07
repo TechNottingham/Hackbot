@@ -20,11 +20,9 @@ describe 'hack24api script', ->
     it 'should reply to the user that he can see the API', ->
       apiUrl = process.env.HACK24API_URL = 'some API url'
       
-      res = { statusCode: 200 }
-      
       getExec = sinon.stub()
       get = sinon.stub().returns(getExec)
-      getExec.callsArgWith(0, null, res, '')
+      getExec.callsArgWith(0, null, { statusCode: 200 }, '')
       
       http = @room.robot.http = sinon.stub()
       http.returns { get: get }
