@@ -137,9 +137,9 @@ describe 'Create team', ->
       http.withArgs("#{apiUrl}/teams").returns { header: teamsHeadersStub }
       
       usersGetExecStub.callsArgWith(0, null, { statusCode: 404 }, null)
-      usersPostExecStub.callsArgWith(0, null, { statusCode: 200 }, null)
+      usersPostExecStub.callsArgWith(0, null, { statusCode: 201 }, null)
       
-      teamsPostExecStub.callsArgWith(0, null, { statusCode: 200 }, null)
+      teamsPostExecStub.callsArgWith(0, null, { statusCode: 201 }, null)
       
       @room.user.say('sarah', '@hubot create team Pineapple Express').then =>
         expect(usersGetHeadersStub).to.have.been.calledWith('Accept', 'application/json')
@@ -211,7 +211,7 @@ describe 'Create team', ->
       http.withArgs("#{apiUrl}/teams").returns { header: teamsHeadersStub }
       
       usersGetExecStub.callsArgWith(0, null, { statusCode: 404 }, null)
-      usersPostExecStub.callsArgWith(0, null, { statusCode: 200 }, null)
+      usersPostExecStub.callsArgWith(0, null, { statusCode: 201 }, null)
       
       teamsPostExecStub.callsArgWith(0, null, { statusCode: 404 }, null)
       

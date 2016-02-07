@@ -44,7 +44,7 @@ module.exports = (robot) ->
         if res.statusCode is 404
           Client.createUser(robot, userId, userName)
             .then (statusCode) ->
-              if statusCode isnt 200
+              if statusCode isnt 201
                 return response.reply 'Sorry, I can\'t create your user account :frowning:'
                 
               Client.createTeam(robot, teamName, userId)
@@ -52,7 +52,7 @@ module.exports = (robot) ->
                   if statusCode is 409
                     return response.reply 'Sorry, but that team already exists!'
                     
-                  if statusCode isnt 200
+                  if statusCode isnt 201
                     return response.reply 'Sorry, I can\'t create your team :frowning:'
                     
                   response.reply "Welcome to team #{teamName}!"
