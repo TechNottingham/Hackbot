@@ -20,7 +20,7 @@ module.exports = (robot) ->
 
   robot.respond /can you see the api\??/i, (response) ->
     response.reply "I'll have a quick look for you Sir..."
-    Client.checkApi robot
+    Client.checkApi(robot)
       .then (statusCode) ->
         response.reply if statusCode is 200 then 'I see her!' else "I'm sorry Sir, there appears to be a problem; something about \"#{statusCode}\""
       .catch (err) ->
@@ -38,16 +38,16 @@ module.exports = (robot) ->
     userName = response.message.user.name
     teamName = response.match[1]
     
-    Client.getUser robot, userId
+    Client.getUser(robot, userId)
       .then (res) ->
       
         if res.statusCode is 404
           userJson = JSON.stringify
             id: userId
           
-          Client.createUser robot, userId, userName
+          Client.createUser(robot, userId, userName)
             .then (statusCode) ->
-              Client.createTeam robot, teamName, userId
+              Client.createTeam(robot, teamName, userId)
                 .then (statusCode) ->
                   if statusCode is 409
                     return response.reply "Sorry, but that team already exists!"
@@ -60,7 +60,7 @@ module.exports = (robot) ->
             response.reply "You're already a member of #{res.user.team}!"
             return
           
-          Client.createTeam robot, teamName, userId
+          Client.createTeam(robot, teamName, userId)
             .then (statusCode) ->
               if statusCode is 409
                 return response.reply "Sorry, but that team already exists!"
