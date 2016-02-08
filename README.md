@@ -1,4 +1,5 @@
-[![Stories in Ready](https://badge.waffle.io/TechNottingham/Hackbot.png?label=ready&title=Ready)](https://waffle.io/TechNottingham/Hackbot)
+[![Build Status]](https://semaphoreci.com/codesleuth/hackbot) [![Stories in Ready]](https://waffle.io/TechNottingham/Hackbot)
+
 # hackbot
 
 hackbot is a chat bot built on the [Hubot][hubot] framework. It was
@@ -216,3 +217,6 @@ you're having issues.
 =======
 # Hackbot
 Hackbot is here to help you hack at Hack24 - http://www.hack24.co.uk
+
+[Build Status]: https://semaphoreci.com/api/v1/codesleuth/hackbot/branches/master/badge.svg
+[Stories in Ready]: https://badge.waffle.io/TechNottingham/Hackbot.png?label=ready&title=Ready
