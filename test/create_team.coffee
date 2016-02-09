@@ -19,33 +19,34 @@ describe 'Create team', ->
 
     it 'should create the team with this user as the only member, and reply with a welcome message', ->
       apiUrl = process.env.HACK24API_URL = 'any url to the API'
+      user = process.env.HACKBOT_USERNAME = 'some adasdasd'
+      pass = process.env.HACKBOT_PASSWORD = 'a dfdgdgd'
       
-      getExecStub = sinon.stub()
-      getStub = sinon.stub()
-      getStub.returns getExecStub
+      usersGetExecStub = sinon.stub()
+      usersGetStub = sinon.stub()
+      usersGetStub.returns usersGetExecStub
       
-      postExecStub = sinon.stub()
-      postStub = sinon.stub()
-      headerStub = sinon.stub().returns { post: postStub, get: getStub }
-      postStub.returns postExecStub
+      teamsPostExecStub = sinon.stub()
+      teamsPostStub = sinon.stub()
+      teamsPostStub.returns teamsPostExecStub
+      
+      usersGetHeadersStub = sinon.stub().returns { get: usersGetStub }
+      teamsPostHeadersStub = sinon.stub().returns { post: teamsPostStub }
       
       http = @room.robot.http = sinon.stub()
-      http.returns { header: headerStub }
+      http.withArgs("#{apiUrl}/users/bob").returns { header: usersGetHeadersStub }
+      http.withArgs("#{apiUrl}/teams", sinon.match({ auth: "#{user}:#{pass}" })).returns { header: teamsPostHeadersStub }
       
-      userResponse = JSON.stringify
-        id: 'bob'
+      userResponse = JSON.stringify { id: 'bob' }
       
-      getExecStub.callsArgWith(0, null, { statusCode: 200 }, userResponse)
-      postExecStub.callsArgWith(0, null, { statusCode: 201 }, null)
+      usersGetExecStub.callsArgWith(0, null, { statusCode: 200 }, userResponse)
+      teamsPostExecStub.callsArgWith(0, null, { statusCode: 201 }, null)
       
       @room.user.say('bob', '@hubot create team Pineapple Express').then =>
-        expect(http).to.have.been.calledWith("#{apiUrl}/users/bob")
-        expect(headerStub).to.have.been.calledWith('Accept', 'application/json')
+        expect(usersGetHeadersStub).to.have.been.calledWith('Accept', 'application/json')
+        expect(teamsPostHeadersStub).to.have.been.calledWith('Content-Type', 'application/json')
         
-        expect(http).to.have.been.calledWith("#{apiUrl}/teams")
-        expect(headerStub).to.have.been.calledWith('Content-Type', 'application/json')
-        
-        expect(postStub).to.have.been.calledWith('{"name":"Pineapple Express","members":["bob"]}')
+        expect(teamsPostStub).to.have.been.calledWith('{"name":"Pineapple Express","members":["bob"]}')
         
         expect(@room.messages).to.eql [
           ['bob', '@hubot create team Pineapple Express'],
@@ -114,6 +115,8 @@ describe 'Create team', ->
 
     it 'should create the user, create the team with this user as the only member, and reply with a welcome message', ->
       apiUrl = process.env.HACK24API_URL = 'any url to the API'
+      user = process.env.HACKBOT_USERNAME = 'some username'
+      pass = process.env.HACKBOT_PASSWORD = 'a password'
       
       usersGetExecStub = sinon.stub()
       usersGetStub = sinon.stub()
@@ -129,12 +132,12 @@ describe 'Create team', ->
       
       usersGetHeadersStub = sinon.stub().returns { get: usersGetStub }
       usersPostHeadersStub = sinon.stub().returns { post: usersPostStub }
-      teamsHeadersStub = sinon.stub().returns { post: teamsPostStub }
+      teamsPostHeadersStub = sinon.stub().returns { post: teamsPostStub }
       
       http = @room.robot.http = sinon.stub()
       http.withArgs("#{apiUrl}/users/sarah").returns { header: usersGetHeadersStub }
-      http.withArgs("#{apiUrl}/users").returns { header: usersPostHeadersStub }
-      http.withArgs("#{apiUrl}/teams").returns { header: teamsHeadersStub }
+      http.withArgs("#{apiUrl}/users", sinon.match({ auth: "#{user}:#{pass}" })).returns { header: usersPostHeadersStub }
+      http.withArgs("#{apiUrl}/teams", sinon.match({ auth: "#{user}:#{pass}" })).returns { header: teamsPostHeadersStub }
       
       usersGetExecStub.callsArgWith(0, null, { statusCode: 404 }, null)
       usersPostExecStub.callsArgWith(0, null, { statusCode: 201 }, null)
@@ -144,8 +147,7 @@ describe 'Create team', ->
       @room.user.say('sarah', '@hubot create team Pineapple Express').then =>
         expect(usersGetHeadersStub).to.have.been.calledWith('Accept', 'application/json')
         expect(usersPostHeadersStub).to.have.been.calledWith('Content-Type', 'application/json')
-        
-        expect(teamsHeadersStub).to.have.been.calledWith('Content-Type', 'application/json')
+        expect(teamsPostHeadersStub).to.have.been.calledWith('Content-Type', 'application/json')
         
         expect(usersPostStub).to.have.been.calledWith('{"userid":"sarah","name":"sarah"}')
         expect(teamsPostStub).to.have.been.calledWith('{"name":"Pineapple Express","members":["sarah"]}')

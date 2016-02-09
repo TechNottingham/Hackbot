@@ -1,3 +1,5 @@
+getAuth = () -> "#{process.env.HACKBOT_USERNAME}:#{process.env.HACKBOT_PASSWORD}"
+
 class Client
 
   @createTeam: (robot, teamName, userId) ->
@@ -6,7 +8,7 @@ class Client
         name: teamName
         members: [ userId ]
         
-      robot.http("#{process.env.HACK24API_URL}/teams")
+      http = robot.http("#{process.env.HACK24API_URL}/teams", { auth: getAuth() })
         .header('Content-Type', 'application/json')
         .post(body) (err, res, body) ->
           if err? then return reject err
@@ -18,7 +20,7 @@ class Client
         userid: userId
         name: userName
           
-      robot.http("#{process.env.HACK24API_URL}/users")
+      http = robot.http("#{process.env.HACK24API_URL}/users", { auth: getAuth() })
         .header('Content-Type', 'application/json')
         .post(body) (err, res, body) ->
           if err? then return reject err

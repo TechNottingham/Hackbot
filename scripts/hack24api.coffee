@@ -8,7 +8,7 @@
 #   hubot can you see the api? - checks if the API is visible
 #   hubot what are your prime directives? - cites hubot's prime directives
 #   hubot my id - echos the ID hubot knows you as
-#   hunot create team <team name> - tries to create team with name <team name> and adds you to it
+#   hubot create team <team name> - tries to create team with name <team name> and adds you to it
 #
 # Author:
 #   codesleuth
