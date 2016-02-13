@@ -9,15 +9,12 @@ chai.use sinonChai
 helper = new Helper('../scripts/hack24api.coffee')
 
 describe 'Tell me about team', ->
-  beforeEach ->
-    @room = helper.createRoom()
 
-  afterEach ->
-    @room.destroy()
-
-  describe 'hubot fetches team information from the API then responds to the user', ->
-
-    it 'should create the user, create the team with this user as the only member, and reply with a welcome message', ->
+  describe.only 'hubot fetches team information from the API then responds to the user', ->
+  
+    before (done) ->
+      @room = helper.createRoom()
+      
       apiUrl = process.env.HACK24API_URL = 'any url to the API'
       
       teamsGetExecStub = sinon.stub()
@@ -32,14 +29,15 @@ describe 'Tell me about team', ->
       secondUserGetStub = sinon.stub()
       secondUserGetStub.returns secondUserGetExecStub
       
-      teamsGetHeadersStub = sinon.stub().returns { get: teamsGetStub }
-      firstUserGetHeadersStub = sinon.stub().returns { get: firstUserGetStub }
-      secondUserGetHeadersStub = sinon.stub().returns { get: secondUserGetStub }
+      @teamsGetHeadersStub = sinon.stub().returns { get: teamsGetStub }
+      @firstUserGetHeadersStub = sinon.stub().returns { get: firstUserGetStub }
+      @secondUserGetHeadersStub = sinon.stub().returns { get: secondUserGetStub }
+      
       
       http = @room.robot.http = sinon.stub()
-      http.withArgs("#{apiUrl}/teams/my crazy team name").returns { header: teamsGetHeadersStub }
-      http.withArgs("#{apiUrl}/users/U1234").returns { header: firstUserGetHeadersStub }
-      http.withArgs("#{apiUrl}/users/U5678").returns { header: secondUserGetHeadersStub }
+      http.withArgs("#{apiUrl}/teams/my crazy team name").returns { header: @teamsGetHeadersStub }
+      http.withArgs("#{apiUrl}/users/U1234").returns { header: @firstUserGetHeadersStub }
+      http.withArgs("#{apiUrl}/users/U5678").returns { header: @secondUserGetHeadersStub }
       
       teamResponse = JSON.stringify
         name: 'My Crazy Team Name'
@@ -58,12 +56,20 @@ describe 'Tell me about team', ->
       firstUserGetExecStub.callsArgWith(0, null, { statusCode: 200 }, firstUserResponse)
       secondUserGetExecStub.callsArgWith(0, null, { statusCode: 200 }, secondUserResponse)
       
-      @room.user.say('sarah', '@hubot tell me about team my crazy team name').then =>
-        expect(teamsGetHeadersStub).to.have.been.calledWith('Accept', 'application/json')
-        expect(firstUserGetHeadersStub).to.have.been.calledWith('Accept', 'application/json')
-        expect(secondUserGetHeadersStub).to.have.been.calledWith('Accept', 'application/json')
-        
-        expect(@room.messages).to.eql [
-          ['sarah', '@hubot tell me about team my crazy team name'],
-          ['hubot', '@sarah "My Crazy Team Name" has 2 members: John, Barry']
-        ]
+      @room.user.say('sarah', '@hubot tell me about team my crazy team name').then done
+
+    it 'should get the team', ->
+      expect(@teamsGetHeadersStub).to.have.been.calledWith('Accept', 'application/json')
+
+    it 'should get each user in the team', ->
+      expect(@firstUserGetHeadersStub).to.have.been.calledWith('Accept', 'application/json')
+      expect(@secondUserGetHeadersStub).to.have.been.calledWith('Accept', 'application/json')
+
+    it 'should reply with the team information', ->
+      expect(@room.messages).to.eql [
+        ['sarah', '@hubot tell me about team my crazy team name'],
+        ['hubot', '@sarah "My Crazy Team Name" has 2 members: John, Barry']
+      ]
+    
+    after ->
+      @room.destroy()
