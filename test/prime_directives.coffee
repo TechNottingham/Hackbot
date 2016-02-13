@@ -4,13 +4,13 @@ expect = require('chai').expect
 helper = new Helper('../scripts/hack24api.coffee')
 
 describe 'Prime directives', ->
-  beforeEach ->
-    @room = helper.createRoom()
-
-  afterEach ->
-    @room.destroy()
     
   describe 'hubot cites his prime directives', ->
+    before ->
+      @room = helper.createRoom()
+
+    after ->
+      @room.destroy()
 
     it 'should reply to the user the prime directives', ->
       @room.user.say('bob', '@hubot what are your prime directives?').then =>

@@ -10,7 +10,7 @@ helper = new Helper('../scripts/hack24api.coffee')
 
 describe 'Tell me about team', ->
 
-  describe.only 'hubot fetches team information from the API then responds to the user', ->
+  describe 'hubot fetches team information from the API then responds to the user', ->
   
     before (done) ->
       @room = helper.createRoom()
