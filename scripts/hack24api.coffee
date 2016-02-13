@@ -69,6 +69,19 @@ module.exports = (robot) ->
                 return response.reply "Sorry, but that team already exists!"
                 
               response.reply "Welcome to team #{teamName}!"
-            
+
+  robot.respond /tell me about team (.*)/i, (response) ->
+    teamName = response.match[1]
+        
+    Client.getTeamByName(robot, teamName)
+      .then (res) ->
+        memberNamesPromises = for member in res.team.members
+          Client.getUser(robot, member)
+          
+        Promise.all(memberNamesPromises)
+          .then (results) ->
+            memberList = for userResult in results
+              "#{userResult.user.name}"
+            response.reply "\"#{res.team.name}\" has #{res.team.members.length} members: #{memberList.join(', ')}" 
       .catch (err) ->
-        console.log err
+        response.reply 'I\'m sorry Sir, there appears to be a big problem!'
