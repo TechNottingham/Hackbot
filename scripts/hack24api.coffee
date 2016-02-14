@@ -15,6 +15,7 @@
 #
 
 {Client} = require '../lib/client'
+slug = require 'slug'
 
 module.exports = (robot) ->
 
@@ -57,24 +58,24 @@ module.exports = (robot) ->
                     return response.reply 'Sorry, I can\'t create your team :frowning:'
                     
                   response.reply "Welcome to team #{teamName}!"
+          return
               
-        else
-          if res.user.team isnt undefined
-            response.reply "You're already a member of #{res.user.team}!"
-            return
-          
-          robot.hack24client.createTeam(teamName, userId)
-            .then (statusCode) ->
-              if statusCode is 409
-                return response.reply "Sorry, but that team already exists!"
-                    
-              if statusCode isnt 201
-                return response.reply 'Sorry, I can\'t create your team :frowning:'
-                
-              response.reply "Welcome to team #{teamName}!"
+        if res.user.team isnt undefined
+          response.reply "You're already a member of #{res.user.team}!"
+          return
+        
+        robot.hack24client.createTeam(teamName, userId)
+          .then (statusCode) ->
+            if statusCode is 409
+              return response.reply "Sorry, but that team already exists!"
+                  
+            if statusCode isnt 201
+              return response.reply 'Sorry, I can\'t create your team :frowning:'
+              
+            response.reply "Welcome to team #{teamName}!"
 
   robot.respond /tell me about team (.*)/i, (response) ->
-    teamName = response.match[1]
+    teamName = slug(response.match[1])
         
     robot.hack24client.getTeamByName(teamName)
       .then (res) ->

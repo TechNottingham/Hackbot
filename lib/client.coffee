@@ -45,9 +45,9 @@ class Client
           if res.statusCode is 200 then result.user = JSON.parse(body)
           resolve(result)
         
-  getTeamByName: (teamName) =>
+  getTeam: (teamId) =>
     new Promise (resolve, reject) =>
-      @robot.http("#{process.env.HACK24API_URL}/teams/#{encodeURIComponent(teamName)}")
+      @robot.http("#{process.env.HACK24API_URL}/teams/#{encodeURIComponent(teamId)}")
         .header('Accept', 'application/json')
         .get() (err, res, body) ->
           if err? then return reject err

@@ -26,19 +26,23 @@ describe '@hubot tell me about team X', ->
       getUserStub.withArgs('U5678').returns Promise.resolve
         user:
           name: 'Barry'
+        
+      @getTeamStub = sinon.stub().returns Promise.resolve
+        statusCode: 200
+        team: teamResponse
       
       @room.robot.hack24client =
-        getTeamByName: ->
-          Promise.resolve
-            statusCode: 200
-            team: teamResponse
+        getTeamByName: @getTeamStub
         getUser: getUserStub
       
-      @room.user.say('sarah', '@hubot tell me about team my crazy team name').then done
+      @room.user.say('sarah', '@hubot tell me about team     my crazy team name         ').then done
+
+    it 'should fetch the team by slug (teamid)', ->
+      expect(@getTeamStub).to.have.been.calledWith('my-crazy-team-name')
 
     it 'should tell the user the team information', ->
       expect(@room.messages).to.eql [
-        ['sarah', '@hubot tell me about team my crazy team name'],
+        ['sarah', '@hubot tell me about team     my crazy team name         '],
         ['hubot', '@sarah "My Crazy Team Name" has 2 members: John, Barry']
       ]
     

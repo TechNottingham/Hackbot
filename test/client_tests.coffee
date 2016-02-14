@@ -249,7 +249,7 @@ describe 'Hack24 API Client', ->
           expect(@err).to.equal(@httpError)
 
 
-  describe '#getTeamByName', ->
+  describe '#getTeam', ->
 
     describe 'when team exists', ->
     
@@ -270,14 +270,14 @@ describe 'Hack24 API Client', ->
         
         client = new Client { http: @http }
         
-        promise = client.getTeamByName 'Top Bants' 
+        promise = client.getTeam 'top-bants' 
         promise.then (result) =>
           @result = result
           done()
         promise.catch done
 
       it 'should get the team from the API', ->
-          expect(@http).to.have.been.calledWith("#{@apiUrl}/teams/Top%20Bants")
+          expect(@http).to.have.been.calledWith("#{@apiUrl}/teams/top-bants")
           expect(@headerStub).to.have.been.calledWith('Accept', 'application/json')
 
       it 'should resolve with status code 200', ->
@@ -302,7 +302,7 @@ describe 'Hack24 API Client', ->
         
         client = new Client { http: http }
         
-        promise = client.getTeamByName 'Keyboard Kippers'
+        promise = client.getTeam 'keyboard-kippers'
         promise.then (result) =>
           @result = result
           done()
@@ -331,7 +331,7 @@ describe 'Hack24 API Client', ->
         
         client = new Client { http: http }
         
-        promise = client.getTeamByName 'Sreppots Stoppers'
+        promise = client.getTeam 'sreppots-stoppers'
         promise.then -> done()
         promise.catch (err) =>
           @err = err
