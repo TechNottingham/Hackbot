@@ -77,7 +77,7 @@ module.exports = (robot) ->
   robot.respond /tell me about team (.*)/i, (response) ->
     teamName = slug(response.match[1])
         
-    robot.hack24client.getTeamByName(teamName)
+    robot.hack24client.getTeam(teamName)
       .then (res) ->
         memberNamesPromises = for member in res.team.members
           robot.hack24client.getUser(member)

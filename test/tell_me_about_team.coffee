@@ -32,7 +32,7 @@ describe '@hubot tell me about team X', ->
         team: teamResponse
       
       @room.robot.hack24client =
-        getTeamByName: @getTeamStub
+        getTeam: @getTeamStub
         getUser: getUserStub
       
       @room.user.say('sarah', '@hubot tell me about team     my crazy team name         ').then done
