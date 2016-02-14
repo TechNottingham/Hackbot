@@ -18,13 +18,14 @@
 
 module.exports = (robot) ->
 
-  robot.respond /can you see the api\??/i, (response) ->
+  robot.hack24client = new Client robot
+
+  robot.respond /can you see the api\??/i, (response) =>
     response.reply "I'll have a quick look for you Sir..."
-    Client.checkApi(robot)
+    robot.hack24client.checkApi()
       .then (statusCode) ->
         response.reply if statusCode is 200 then 'I see her!' else "I'm sorry Sir, there appears to be a problem; something about \"#{statusCode}\""
       .catch (err) ->
-        console.error 'Cannot see the API: ', err
         response.reply 'I\'m sorry Sir, there appears to be a big problem!'
 
   robot.respond /what are your prime directives\??/i, (response) ->
@@ -38,16 +39,16 @@ module.exports = (robot) ->
     userName = response.message.user.name
     teamName = response.match[1]
     
-    Client.getUser(robot, userId)
+    robot.hack24client.getUser(userId)
       .then (res) ->
       
         if res.statusCode is 404
-          Client.createUser(robot, userId, userName)
+          robot.hack24client.createUser(userId, userName)
             .then (statusCode) ->
               if statusCode isnt 201
                 return response.reply 'Sorry, I can\'t create your user account :frowning:'
                 
-              Client.createTeam(robot, teamName, userId)
+              robot.hack24client.createTeam(teamName, userId)
                 .then (statusCode) ->
                   if statusCode is 409
                     return response.reply 'Sorry, but that team already exists!'
@@ -58,25 +59,27 @@ module.exports = (robot) ->
                   response.reply "Welcome to team #{teamName}!"
               
         else
-        
           if res.user.team isnt undefined
             response.reply "You're already a member of #{res.user.team}!"
             return
           
-          Client.createTeam(robot, teamName, userId)
+          robot.hack24client.createTeam(teamName, userId)
             .then (statusCode) ->
               if statusCode is 409
                 return response.reply "Sorry, but that team already exists!"
+                    
+              if statusCode isnt 201
+                return response.reply 'Sorry, I can\'t create your team :frowning:'
                 
               response.reply "Welcome to team #{teamName}!"
 
   robot.respond /tell me about team (.*)/i, (response) ->
     teamName = response.match[1]
         
-    Client.getTeamByName(robot, teamName)
+    robot.hack24client.getTeamByName(teamName)
       .then (res) ->
         memberNamesPromises = for member in res.team.members
-          Client.getUser(robot, member)
+          robot.hack24client.getUser(member)
           
         Promise.all(memberNamesPromises)
           .then (results) ->

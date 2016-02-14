@@ -1,268 +1,227 @@
-Helper = require 'hubot-test-helper'
-
 chai = require 'chai'
 expect = chai.expect
 sinon = require 'sinon'
-sinonChai = require 'sinon-chai'
-chai.use sinonChai
+chai.use require 'sinon-chai'
 
+Helper = require 'hubot-test-helper'
 helper = new Helper('../scripts/hack24api.coffee')
 
-describe 'Create team', ->
+describe '@hubot create team X', ->
 
-  describe 'hubot creates a team for an existing user and adds the user to the team', ->
+  describe 'with an existing user', ->
   
     before (done) ->
       @room = helper.createRoom()
       
-      apiUrl = process.env.HACK24API_URL = 'any url to the API'
-      user = process.env.HACKBOT_USERNAME = 'some adasdasd'
-      pass = process.env.HACKBOT_PASSWORD = 'a dfdgdgd'
+      @getUserStub = sinon.stub().returns Promise.resolve
+        statusCode: 200
+        user: {}
       
-      usersGetExecStub = sinon.stub()
-      usersGetStub = sinon.stub()
-      usersGetStub.returns usersGetExecStub
+      @createTeamStub = sinon.stub().returns Promise.resolve 201
       
-      teamsPostExecStub = sinon.stub()
-      @teamsPostStub = sinon.stub()
-      @teamsPostStub.returns teamsPostExecStub
-      
-      @usersGetHeadersStub = sinon.stub().returns { get: usersGetStub }
-      @teamsPostHeadersStub = sinon.stub().returns { post: @teamsPostStub }
-      
-      http = @room.robot.http = sinon.stub()
-      http.withArgs("#{apiUrl}/users/bob").returns { header: @usersGetHeadersStub }
-      http.withArgs("#{apiUrl}/teams", sinon.match({ auth: "#{user}:#{pass}" })).returns { header: @teamsPostHeadersStub }
-      
-      userResponse = JSON.stringify { id: 'bob' }
-      
-      usersGetExecStub.callsArgWith(0, null, { statusCode: 200 }, userResponse)
-      teamsPostExecStub.callsArgWith(0, null, { statusCode: 201 }, null)
+      @room.robot.hack24client =
+        getUser: @getUserStub
+        createTeam: @createTeamStub
       
       @room.user.say('bob', '@hubot create team Pineapple Express').then done
 
     after ->
       @room.destroy()
 
-    it 'should get the user', ->
-        expect(@usersGetHeadersStub).to.have.been.calledWith('Accept', 'application/json')
+    it 'should fetch the user', ->
+      expect(@getUserStub).to.have.been.calledWith('bob')
 
-    it 'should create the team with this user as the only member', ->
-        expect(@teamsPostHeadersStub).to.have.been.calledWith('Content-Type', 'application/json')
-        expect(@teamsPostStub).to.have.been.calledWith('{"name":"Pineapple Express","members":["bob"]}')
+    it 'should create the team', ->
+      expect(@createTeamStub).to.have.been.calledWith('Pineapple Express', 'bob')
 
-    it 'should reply with a welcome message', ->
-        expect(@room.messages).to.eql [
-          ['bob', '@hubot create team Pineapple Express'],
-          ['hubot', "@bob Welcome to team Pineapple Express!"]
-        ]
+    it 'should welcome the user to the team', ->
+      expect(@room.messages).to.eql [
+        ['bob', '@hubot create team Pineapple Express'],
+        ['hubot', "@bob Welcome to team Pineapple Express!"]
+      ]
 
-  describe 'hubot tries to create a team for a user already in a team', ->
+  describe 'when the user is already in a team', ->
   
     before (done) ->
       @room = helper.createRoom()
       
-      @apiUrl = process.env.HACK24API_URL = 'any url to the API'
+      @getUserStub = sinon.stub().returns Promise.resolve
+        statusCode: 200
+        user:
+          team: 'Pineapple Express'
       
-      getExecStub = sinon.stub()
-      getStub = sinon.stub()
-      getStub.returns getExecStub
-      
-      @headerStub = sinon.stub().returns { get: getStub }
-      
-      @http = @room.robot.http = sinon.stub()
-      @http.returns { header: @headerStub }
-      
-      userResponse = JSON.stringify
-        id: 'barry'
-        team: 'Pineapple Express'
-      
-      getExecStub.callsArgWith(0, null, { statusCode: 200 }, userResponse)
+      @room.robot.hack24client =
+        getUser: @getUserStub
       
       @room.user.say('barry', '@hubot create team Bobby Dazzlers').then done
 
     after ->
       @room.destroy()
 
-    it 'should respond to the user that they cannot be in more than one team', ->
-        expect(@http).to.have.been.calledWith("#{@apiUrl}/users/barry")
-        expect(@headerStub).to.have.been.calledWith('Accept', 'application/json')
+    it 'should fetch the user', ->
+      expect(@getUserStub).to.have.been.calledWith('barry')
 
-    it 'should respond to the user that they cannot be in more than one team', ->
-        expect(@room.messages).to.eql [
-          ['barry', '@hubot create team Bobby Dazzlers'],
-          ['hubot', "@barry You're already a member of Pineapple Express!"]
-        ]
+    it 'should tell the user that they cannot be in more than one team', ->
+      expect(@room.messages).to.eql [
+        ['barry', '@hubot create team Bobby Dazzlers'],
+        ['hubot', "@barry You're already a member of Pineapple Express!"]
+      ]
 
-  describe 'hubot tries to create a team which already exists', ->
+  describe 'when user and team already exist', ->
   
     before (done) ->
       @room = helper.createRoom()
       
-      apiUrl = process.env.HACK24API_URL = 'any url to the API'
+      @getUserStub = sinon.stub().returns Promise.resolve
+        statusCode: 200
+        user: {}
       
-      getExecStub = sinon.stub()
-      getStub = sinon.stub()
-      getStub.returns getExecStub
+      @createTeamStub = sinon.stub().returns Promise.resolve 409
       
-      postExecStub = sinon.stub()
-      postStub = sinon.stub()
-      headerStub = sinon.stub().returns { post: postStub, get: getStub }
-      postStub.returns postExecStub
-      
-      http = @room.robot.http = sinon.stub()
-      http.returns { header: headerStub }
-      
-      userResponse = JSON.stringify
-        id: 'jerry'
-      
-      getExecStub.callsArgWith(0, null, { statusCode: 200 }, userResponse)
-      postExecStub.callsArgWith(0, null, { statusCode: 409 }, null)
+      @room.robot.hack24client =
+        getUser: @getUserStub
+        createTeam: @createTeamStub
       
       @room.user.say('jerry', '@hubot create team Top Bants').then done
 
     after ->
       @room.destroy()
 
-    it 'should reject the action and tell the user that the team already exists', ->
-        expect(@room.messages).to.eql [
-          ['jerry', '@hubot create team Top Bants'],
-            ['hubot', "@jerry Sorry, but that team already exists!"]
-        ]
+    it 'should fetch the user', ->
+      expect(@getUserStub).to.have.been.calledWith('jerry')
 
-  describe 'hubot creates the user, creates a team, and adds the user to the team', ->
+    it 'should create the team', ->
+      expect(@createTeamStub).to.have.been.calledWith('Top Bants', 'jerry')
+
+    it 'should tell the user that the team already exists', ->
+      expect(@room.messages).to.eql [
+        ['jerry', '@hubot create team Top Bants'],
+        ['hubot', "@jerry Sorry, but that team already exists!"]
+      ]
+
+  describe 'when user and team do not already exist', ->
   
     before (done) ->
       @room = helper.createRoom()
       
-      apiUrl = process.env.HACK24API_URL = 'any url to the API'
-      user = process.env.HACKBOT_USERNAME = 'some username'
-      pass = process.env.HACKBOT_PASSWORD = 'a password'
+      @getUserStub = sinon.stub().returns Promise.resolve
+        statusCode: 404
       
-      usersGetExecStub = sinon.stub()
-      usersGetStub = sinon.stub()
-      usersGetStub.returns usersGetExecStub
+      @createUserStub = sinon.stub().returns Promise.resolve 201
       
-      usersPostExecStub = sinon.stub()
-      @usersPostStub = sinon.stub()
-      @usersPostStub.returns usersPostExecStub
+      @createTeamStub = sinon.stub().returns Promise.resolve 201
       
-      teamsPostExecStub = sinon.stub()
-      @teamsPostStub = sinon.stub()
-      @teamsPostStub.returns teamsPostExecStub
-      
-      @usersGetHeadersStub = sinon.stub().returns { get: usersGetStub }
-      @usersPostHeadersStub = sinon.stub().returns { post: @usersPostStub }
-      @teamsPostHeadersStub = sinon.stub().returns { post: @teamsPostStub }
-      
-      http = @room.robot.http = sinon.stub()
-      http.withArgs("#{apiUrl}/users/sarah").returns { header: @usersGetHeadersStub }
-      http.withArgs("#{apiUrl}/users", sinon.match({ auth: "#{user}:#{pass}" })).returns { header: @usersPostHeadersStub }
-      http.withArgs("#{apiUrl}/teams", sinon.match({ auth: "#{user}:#{pass}" })).returns { header: @teamsPostHeadersStub }
-      
-      usersGetExecStub.callsArgWith(0, null, { statusCode: 404 }, null)
-      usersPostExecStub.callsArgWith(0, null, { statusCode: 201 }, null)
-      
-      teamsPostExecStub.callsArgWith(0, null, { statusCode: 201 }, null)
+      @room.robot.hack24client =
+        getUser: @getUserStub
+        createUser: @createUserStub
+        createTeam: @createTeamStub
       
       @room.user.say('sarah', '@hubot create team Pineapple Express').then done
 
     after ->
       @room.destroy()
 
-    it 'should try to get the user', ->
-        expect(@usersGetHeadersStub).to.have.been.calledWith('Accept', 'application/json')
+    it 'should fetch the user', ->
+      expect(@getUserStub).to.have.been.calledWith('sarah')
 
     it 'should create the user', ->
-        expect(@usersPostHeadersStub).to.have.been.calledWith('Content-Type', 'application/json')
-        expect(@usersPostStub).to.have.been.calledWith('{"userid":"sarah","name":"sarah"}')
+      expect(@createUserStub).to.have.been.calledWith('sarah', 'sarah')
 
-    it 'should create the team with the new user as the only member', ->
-        expect(@teamsPostHeadersStub).to.have.been.calledWith('Content-Type', 'application/json')
-        expect(@teamsPostStub).to.have.been.calledWith('{"name":"Pineapple Express","members":["sarah"]}')
+    it 'should create the team', ->
+      expect(@createTeamStub).to.have.been.calledWith('Pineapple Express', 'sarah')
 
-    it 'should reply with a welcome message', ->
-        expect(@room.messages).to.eql [
-          ['sarah', '@hubot create team Pineapple Express'],
-          ['hubot', "@sarah Welcome to team Pineapple Express!"]
-        ]
+    it 'should welcome the new user to the new team', ->
+      expect(@room.messages).to.eql [
+        ['sarah', '@hubot create team Pineapple Express'],
+        ['hubot', "@sarah Welcome to team Pineapple Express!"]
+      ]
 
-  describe 'hubot can\'t create user when trying to create team', ->
+  describe 'when creating user returns an unexpected code', ->
   
     before (done) ->
       @room = helper.createRoom()
       
-      apiUrl = process.env.HACK24API_URL = 'any url to the API'
+      @getUserStub = sinon.stub().returns Promise.resolve
+        statusCode: 404
       
-      usersGetExecStub = sinon.stub()
-      usersGetStub = sinon.stub()
-      usersGetStub.returns usersGetExecStub
+      @createUserStub = sinon.stub().returns Promise.resolve 54
+
+      @room.robot.hack24client =
+        getUser: @getUserStub
+        createUser: @createUserStub
       
-      usersPostExecStub = sinon.stub()
-      usersPostStub = sinon.stub()
-      usersPostStub.returns usersPostExecStub
-      
-      usersGetHeadersStub = sinon.stub().returns { get: usersGetStub }
-      usersPostHeadersStub = sinon.stub().returns { post: usersPostStub }
-      
-      http = @room.robot.http = sinon.stub()
-      http.withArgs("#{apiUrl}/users/sarah").returns { header: usersGetHeadersStub }
-      http.withArgs("#{apiUrl}/users").returns { header: usersPostHeadersStub }
-      
-      usersGetExecStub.callsArgWith(0, null, { statusCode: 404 }, null)
-      usersPostExecStub.callsArgWith(0, null, { statusCode: 54 }, null)
-      
-      @room.user.say('sarah', '@hubot create team :melon:').then done
+      @room.user.say('hannah', '@hubot create team :melon:').then done
 
     after ->
       @room.destroy()
 
-    it 'should respond with a failure message', ->
-        expect(@room.messages).to.eql [
-          ['sarah', '@hubot create team :melon:'],
-          ['hubot', "@sarah Sorry, I can't create your user account :frowning:"]
-        ]
+    it 'should fetch the user', ->
+      expect(@getUserStub).to.have.been.calledWith('hannah')
 
-  describe 'hubot creates the user, but cannot create the team, even though it is unique', ->
+    it 'should create the user', ->
+      expect(@createUserStub).to.have.been.calledWith('hannah', 'hannah')
+
+    it 'should tell the user that their user account could not be created', ->
+      expect(@room.messages).to.eql [
+        ['hannah', '@hubot create team :melon:'],
+        ['hubot', "@hannah Sorry, I can't create your user account :frowning:"]
+      ]
+
+  describe 'when creating the user succeeds and creating the team returns an unexpected code', ->
   
     before (done) ->
       @room = helper.createRoom()
       
-      apiUrl = process.env.HACK24API_URL = 'any url to the API'
+      @getUserStub = sinon.stub().returns Promise.resolve
+        statusCode: 404
       
-      usersGetExecStub = sinon.stub()
-      usersGetStub = sinon.stub()
-      usersGetStub.returns usersGetExecStub
+      @createUserStub = sinon.stub().returns Promise.resolve 201
       
-      usersPostExecStub = sinon.stub()
-      usersPostStub = sinon.stub()
-      usersPostStub.returns usersPostExecStub
-      
-      teamsPostExecStub = sinon.stub()
-      teamsPostStub = sinon.stub()
-      teamsPostStub.returns teamsPostExecStub
-      
-      usersGetHeadersStub = sinon.stub().returns { get: usersGetStub }
-      usersPostHeadersStub = sinon.stub().returns { post: usersPostStub }
-      teamsHeadersStub = sinon.stub().returns { post: teamsPostStub }
-      
-      http = @room.robot.http = sinon.stub()
-      http.withArgs("#{apiUrl}/users/sarah").returns { header: usersGetHeadersStub }
-      http.withArgs("#{apiUrl}/users").returns { header: usersPostHeadersStub }
-      http.withArgs("#{apiUrl}/teams").returns { header: teamsHeadersStub }
-      
-      usersGetExecStub.callsArgWith(0, null, { statusCode: 404 }, null)
-      usersPostExecStub.callsArgWith(0, null, { statusCode: 201 }, null)
-      
-      teamsPostExecStub.callsArgWith(0, null, { statusCode: 404 }, null)
-      
+      @createTeamStub = sinon.stub().returns Promise.resolve 503
+
+      @room.robot.hack24client =
+        getUser: @getUserStub
+        createUser: @createUserStub
+        createTeam: @createTeamStub
+
       @room.user.say('sarah', '@hubot create team Whizzbang').then done
 
     after ->
       @room.destroy()
 
-    it 'should create the user, but respond with a message when create team fails', ->
-        expect(@room.messages).to.eql [
-          ['sarah', '@hubot create team Whizzbang'],
-          ['hubot', "@sarah Sorry, I can't create your team :frowning:"]
-        ]
+    it 'should fetch the user', ->
+      expect(@getUserStub).to.have.been.calledWith('sarah')
+
+    it 'should create the user', ->
+      expect(@createUserStub).to.have.been.calledWith('sarah', 'sarah')
+
+    it 'should create the team', ->
+      expect(@createTeamStub).to.have.been.calledWith('Whizzbang', 'sarah')
+
+    it 'should tell the user that the team could not be created', ->
+      expect(@room.messages).to.eql [
+        ['sarah', '@hubot create team Whizzbang'],
+        ['hubot', "@sarah Sorry, I can't create your team :frowning:"]
+      ]
+
+  describe 'when user already exists and creating the team returns an unexpected code', ->
+  
+    before (done) ->
+      @room = helper.createRoom()
+
+      @room.robot.hack24client =
+        getUser: ->
+          Promise.resolve({ statusCode: 200, user: { } })
+        createTeam: ->
+          Promise.resolve(503)
+
+      @room.user.say('sarah', '@hubot create team Whizzbang').then done
+
+    after ->
+      @room.destroy()
+
+    it 'should tell the user that the team could not be created', ->
+      expect(@room.messages).to.eql [
+        ['sarah', '@hubot create team Whizzbang'],
+        ['hubot', "@sarah Sorry, I can't create your team :frowning:"]
+      ]
