@@ -79,6 +79,9 @@ module.exports = (robot) ->
         
     robot.hack24client.getTeam(teamName)
       .then (res) ->
+        if res.statusCode is 404
+          return response.reply "Sorry, I can't find that team."
+          
         memberNamesPromises = for member in res.team.members
           robot.hack24client.getUser(member)
           

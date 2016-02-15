@@ -48,3 +48,28 @@ describe '@hubot tell me about team X', ->
     
     after ->
       @room.destroy()
+
+  describe 'with an unknown team', ->
+  
+    before (done) ->
+      @room = helper.createRoom()
+      
+      @getTeamStub = sinon.stub().returns Promise.resolve
+        statusCode: 404
+      
+      @room.robot.hack24client =
+        getTeam: @getTeamStub
+      
+      @room.user.say('sarah', '@hubot tell me about team  :smile:').then done
+
+    it 'should fetch the team by slug (teamid)', ->
+      expect(@getTeamStub).to.have.been.calledWith('smile')
+
+    it 'should tell the user the team does not exist', ->
+      expect(@room.messages).to.eql [
+        ['sarah', '@hubot tell me about team  :smile:'],
+        ['hubot', '@sarah Sorry, I can\'t find that team.']
+      ]
+    
+    after ->
+      @room.destroy()
