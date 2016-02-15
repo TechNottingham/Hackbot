@@ -432,3 +432,51 @@ describe 'Hack24 API Client', ->
 
       it 'should reject with the error', ->
           expect(@err).to.equal(@httpError)
+
+
+  describe '#removeTeamMember', ->
+    
+      before (done) ->
+        @apiUrl = process.env.HACK24API_URL = 'flying.over.cities.down.to.rio'
+        
+        @user = process.env.HACKBOT_USERNAME = 'net'
+        @pass = process.env.HACKBOT_PASSWORD = 'sky'
+        
+        teamResponse = JSON.stringify
+          members: [ 'Johnny', 'Becky' ]
+        
+        postExecStub = sinon.stub().callsArgWith(0, null, { statusCode: 201 }, null)
+        @postStub = sinon.stub().returns postExecStub
+        
+        getExecStub = sinon.stub().callsArgWith(0, null, { statusCode: 200 }, null)
+        @getStub = sinon.stub().returns getExecStub
+        
+        @headersStub = sinon.stub()
+        @headersStub.withArgs("#{@apiUrl}/teams/#{teamId}", sinon.match({ auth: "#{@user}:#{@pass}" })).returns { post: @postStub }
+        @headersStub.withArgs("#{@apiUrl}/teams/#{teamId}").returns { get: @getStub }
+        
+        @http = sinon.stub()
+        @http.returns { header: @headersStub }
+        
+        client = new Client { http: @http }
+        
+        @teamId = 'swan-song'
+        
+        promise = client.removeTeamMember @teamId, 'U12345' 
+        promise.then (result) =>
+          @result = result
+          done()
+        promise.catch done
+
+      it 'should create the http client for the team URL with the expected authentication', ->
+          expect(@http).to.have.been.calledWith("#{@apiUrl}/teams/#{teamId}", )
+
+      it 'should create the http client for the team URL with the expected authentication', ->
+          expect(@http).to.have.been.calledWith("#{@apiUrl}/teams/#{teamId}", sinon.match({ auth: "#{@user}:#{@pass}" }))
+          
+      it 'should update the team with this user as the only member', ->
+          expect(@headersStub).to.have.been.calledWith('Content-Type', 'application/json')
+          expect(@postStub).to.have.been.calledWith('{"name":"Pineapple Express","members":["U12345"]}')
+
+      it 'should resolve with status code 201', ->
+          expect(@result).to.equal(201)

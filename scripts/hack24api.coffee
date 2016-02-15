@@ -75,9 +75,9 @@ module.exports = (robot) ->
             response.reply "Welcome to team #{teamName}!"
 
   robot.respond /tell me about team (.*)/i, (response) ->
-    teamName = slug(response.match[1])
+    teamId = slug(response.match[1])
         
-    robot.hack24client.getTeam(teamName)
+    robot.hack24client.getTeam(teamId)
       .then (res) ->
         if res.statusCode is 404
           return response.reply "Sorry, I can't find that team."
@@ -90,5 +90,27 @@ module.exports = (robot) ->
             memberList = for userResult in results
               "#{userResult.user.name}"
             response.reply "\"#{res.team.name}\" has #{res.team.members.length} members: #{memberList.join(', ')}" 
+      .catch (err) ->
+        response.reply 'I\'m sorry Sir, there appears to be a big problem!'
+
+  robot.respond /leave my team/i, (response) ->
+    userId = response.message.user.id
+  
+    robot.hack24client.getUser(userId)
+      .then (res) ->
+        teamId = res.user.team.teamid
+        
+        robot.hack24client.getTeam(teamId)
+          .then (res) ->
+            newMembers = res.team.members.filter (memberUserId) -> memberUserId isnt userId
+            teamName = res.team.name
+            
+            newTeam = 
+              members: newMembers
+            
+            robot.hack24client.updateTeam(teamId, { members: newMembers })
+              .then (res) ->
+                response.reply "OK, I\'ve removed you from team \"#{teamName}\""
+        
       .catch (err) ->
         response.reply 'I\'m sorry Sir, there appears to be a big problem!'
