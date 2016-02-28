@@ -100,8 +100,7 @@ module.exports = (robot) ->
         if res.team.members.length == 1 and res.team.members[0].id == response.message.user.id
           return response.reply "You are the only member of \"#{res.team.name}\""
           
-        memberList = for member in res.team.members
-          "#{member.name}"
+        memberList = res.team.members.map((member) => member.name)
         
         noun = if res.team.members.length == 1 then 'member' else 'members'
 
@@ -134,7 +133,7 @@ module.exports = (robot) ->
         if res.teams.length == 0
           return response.reply 'None found.'
           
-        names = res.teams[..2].map((team) => team.name)
+        names = res.teams[..2].map((team) -> team.name)
         response.reply "Found #{res.teams.length} teams; here's a few: #{names.join(', ')}"
         
       .catch (err) ->
