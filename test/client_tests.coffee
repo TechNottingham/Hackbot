@@ -662,3 +662,92 @@ describe 'Hack24 API Client', ->
 
       it 'should reject with an error', ->
         expect(@err.message).to.equal('socket hang up')
+
+
+  describe '#findTeams', ->
+
+    describe 'when teams found', ->
+    
+      before (done) ->
+        process.env.HACK24API_URL = 'http://localhost:12345'
+        
+        api = express()
+        
+        @filter = 'hacking hack'
+        @firstTeam =
+          id: 'hack-hackers-hacking-hacks'
+          name: 'Hack Hackers Hacking Hacks'
+        @secondTeam =
+          id: 'hackers-hacking-hack-hacks'
+          name: 'Hackers Hacking Hack Hacks'
+          
+        
+        api.get "/teams", (req, res) =>
+          @accept = req.headers['accept']
+          @filterNameValue = req.query.filter.name
+          res.status(200).send
+            data: [{
+              type: 'teams'
+              id: @firstTeam.id
+              attributes:
+                name: @firstTeam.name
+            },{
+              type: 'teams'
+              id: @secondTeam.id
+              attributes:
+                name: @secondTeam.name
+            }]
+        
+        client = new Client
+        
+        @server = api.listen 12345, (err) =>
+          client.findTeams(@filter)
+            .then (@result) =>
+              done()
+            .catch done
+      
+      after (done) ->
+        @server.close done
+
+      it 'should resolve with status code 200 OK', ->
+          expect(@result.statusCode).to.equal(200)
+
+      it 'should resolve with OK', ->
+          expect(@result.ok).to.be.true
+
+      it 'should request with accept application/vnd.api+json', ->
+          expect(@accept).to.equal('application/vnd.api+json')
+
+      it 'should return two teams', ->
+          expect(@result.teams.length).to.equal(2)
+
+      it 'should return both teams', ->
+          expect(@result.teams[0].id).to.equal(@firstTeam.id)
+          expect(@result.teams[0].name).to.equal(@firstTeam.name)
+          expect(@result.teams[1].id).to.equal(@secondTeam.id)
+          expect(@result.teams[1].name).to.equal(@secondTeam.name)
+
+    describe 'when http error', ->
+    
+      before (done) ->
+        process.env.HACK24API_URL = 'http://localhost:12345'
+        
+        api = express()
+        
+        api.get '/teams', (req, res) ->
+          res.socket.destroy()
+
+        client = new Client
+        
+        @server = api.listen 12345, (err) =>
+          client.findTeams('some filter') 
+            .then ->
+              done(new Error 'Promise resolved')
+            .catch (@err) =>
+              done()
+      
+      after (done) ->
+        @server.close done
+
+      it 'should reject with an error', ->
+        expect(@err.message).to.equal('socket hang up')

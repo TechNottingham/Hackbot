@@ -43,7 +43,7 @@ describe '@hubot tell me about team X', ->
     after ->
       @room.destroy()
 
-  describe.only 'when team exists with one member', ->
+  describe 'when team exists with one member', ->
   
     before (done) ->
       @room = helper.createRoom()

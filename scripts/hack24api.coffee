@@ -119,3 +119,18 @@ module.exports = (robot) ->
         
       .catch (err) ->
         response.reply 'I\'m sorry Sir, there appears to be a big problem!'
+
+
+  robot.respond /find teams like (.*)/i, (response) ->
+    nameFilter = response.match[1]
+  
+    robot.hack24client.findTeams(nameFilter)
+      .then (res) ->
+        if res.teams.length == 0
+          return response.reply 'None found.'
+          
+        names = res.teams[..2].map((team) => team.name)
+        response.reply "Found #{res.teams.length} teams; here's a few: #{names.join(', ')}"
+        
+      .catch (err) ->
+        response.reply 'I\'m sorry Sir, there appears to be a big problem!'

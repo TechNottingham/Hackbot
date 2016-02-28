@@ -119,5 +119,23 @@ class Client
             statusCode: res.statusCode
             
           resolve(result)
+        
+  findTeams: (filter) ->
+    new Promise (resolve, reject) =>
+      @httpClient("#{process.env.HACK24API_URL}/teams?filter[name]=#{encodeURIComponent(filter)}")
+        .header('Accept', 'application/vnd.api+json')
+        .get() (err, res, body) ->
+          if err? then return reject err
+          if res.statusCode is 403 then return reject(new Error 'Forbidden')
+          
+          result =
+            ok: res.statusCode == 200
+            statusCode: res.statusCode
+            
+          if result.ok
+            store = new Store
+            result.teams = store.sync JSON.parse(body)
+              
+          resolve(result)
 
 module.exports.Client = Client
