@@ -107,6 +107,35 @@ describe '@hubot tell me about team X', ->
     after ->
       @room.destroy()
 
+  describe 'when team exists with no members', ->
+  
+    before (done) ->
+      @room = helper.createRoom()
+        
+      @getTeamStub = sinon.stub().returns Promise.resolve
+        ok: true
+        team:
+          id: 'my-crazy-team-name'
+          name: 'My Crazy Team Name'
+          members: []
+      
+      @room.robot.hack24client =
+        getTeam: @getTeamStub
+      
+      @room.user.say('sarah', '@hubot tell me about team     my cRAZY team name         ').then done
+
+    it 'should fetch the team by slug (teamid)', ->
+      expect(@getTeamStub).to.have.been.calledWith('my-crazy-team-name')
+
+    it 'should tell the user the team information', ->
+      expect(@room.messages).to.eql [
+        ['sarah', '@hubot tell me about team     my cRAZY team name         '],
+        ['hubot', '@sarah "My Crazy Team Name" is an empty team.']
+      ]
+    
+    after ->
+      @room.destroy()
+
   describe 'when team does not exist', ->
   
     before (done) ->

@@ -93,6 +93,9 @@ module.exports = (robot) ->
       .then (res) ->
         if res.statusCode is 404 then return response.reply "Sorry, I can't find that team."
         if !res.ok then return response.reply 'Sorry, there was a problem when I tried to look up that team :frowning:'
+        
+        if res.team.members.length == 0
+          return response.reply "\"#{res.team.name}\" is an empty team."
           
         if res.team.members.length == 1 and res.team.members[0].id == response.message.user.id
           return response.reply "You are the only member of \"#{res.team.name}\""
