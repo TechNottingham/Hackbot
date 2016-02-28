@@ -17,6 +17,8 @@
 {Client} = require '../lib/client'
 slug = require 'slug'
 
+slugify = (name) -> slug(name, { lower: true })
+
 module.exports = (robot) ->
 
   robot.hack24client = new Client robot
@@ -85,7 +87,7 @@ module.exports = (robot) ->
 
 
   robot.respond /tell me about team (.*)/i, (response) ->
-    teamId = slug(response.match[1])
+    teamId = slugify(response.match[1])
         
     robot.hack24client.getTeam(teamId)
       .then (res) ->

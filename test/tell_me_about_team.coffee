@@ -29,14 +29,14 @@ describe '@hubot tell me about team X', ->
       @room.robot.hack24client =
         getTeam: @getTeamStub
       
-      @room.user.say('sarah', '@hubot tell me about team     my crazy team name         ').then done
+      @room.user.say('sarah', '@hubot tell me about team     My Crazy team name         ').then done
 
     it 'should fetch the team by slug (teamid)', ->
       expect(@getTeamStub).to.have.been.calledWith('my-crazy-team-name')
 
     it 'should tell the user the team information', ->
       expect(@room.messages).to.eql [
-        ['sarah', '@hubot tell me about team     my crazy team name         '],
+        ['sarah', '@hubot tell me about team     My Crazy team name         '],
         ['hubot', '@sarah "My Crazy Team Name" has 2 members: John, Barry']
       ]
     
