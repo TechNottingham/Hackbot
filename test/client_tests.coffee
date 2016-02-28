@@ -1,8 +1,5 @@
 chai = require 'chai'
 expect = chai.expect
-sinon = require 'sinon'
-sinonChai = require 'sinon-chai'
-chai.use sinonChai
 
 {Client} = require '../lib/client'
 
@@ -590,8 +587,9 @@ describe 'Hack24 API Client', ->
   
       before (done) ->
         process.env.HACK24API_URL = 'http://localhost:12345'
-        @user = process.env.HACKBOT_USERNAME = 'net'
-        @pass = process.env.HACKBOT_PASSWORD = 'sky'
+        user = process.env.HACKBOT_USERNAME = 'net'
+        pass = process.env.HACKBOT_PASSWORD = 'sky'
+        @expectedAuth = "Basic #{new Buffer("#{user}:#{pass}").toString('base64')}"
         
         api = express()
         
@@ -601,6 +599,7 @@ describe 'Hack24 API Client', ->
         api.delete "/teams/#{@teamId}/members", apiJsonParser, (req, res) =>
           @contentType = req.headers['content-type']
           @accept = req.headers['accept']
+          @authorization = req.headers['authorization']
           @body = req.body
           res.status(204).send()
         
@@ -626,6 +625,9 @@ describe 'Hack24 API Client', ->
 
       it 'should request with content-type application/vnd.api+json', ->
           expect(@contentType).to.equal('application/vnd.api+json')
+
+      it 'should request with the expected authorization', ->
+          expect(@authorization).to.equal(@expectedAuth)
 
       it 'should request only one resource object to be removed', ->
           expect(@body.data.length).to.equal(1)

@@ -8,16 +8,19 @@ helper = new Helper('../scripts/hack24api.coffee')
 
 describe '@hubot create team X', ->
 
-  describe 'with an existing user', ->
+  describe 'when user already exists and not in a team', ->
   
     before (done) ->
       @room = helper.createRoom()
       
       @getUserStub = sinon.stub().returns Promise.resolve
-        statusCode: 200
-        user: {}
+        ok: true
+        user:
+          id: 'bob'
+          team: {}
       
-      @createTeamStub = sinon.stub().returns Promise.resolve 201
+      @createTeamStub = sinon.stub().returns Promise.resolve
+        ok: true
       
       @room.robot.hack24client =
         getUser: @getUserStub
@@ -40,15 +43,17 @@ describe '@hubot create team X', ->
         ['hubot', "@bob Welcome to team Pineapple Express!"]
       ]
 
-  describe 'when the user is already in a team', ->
+  describe 'when user already exists and is already in a team', ->
   
     before (done) ->
       @room = helper.createRoom()
       
       @getUserStub = sinon.stub().returns Promise.resolve
-        statusCode: 200
+        ok: true
         user:
-          team: 'Pineapple Express'
+          team:
+            id: 'pineapple-express'
+            name: 'Pineapple Express'
       
       @room.robot.hack24client =
         getUser: @getUserStub
@@ -67,16 +72,19 @@ describe '@hubot create team X', ->
         ['hubot', "@barry You're already a member of Pineapple Express!"]
       ]
 
-  describe 'when user and team already exist', ->
+  describe 'when user already exists and team already exists', ->
   
     before (done) ->
       @room = helper.createRoom()
       
       @getUserStub = sinon.stub().returns Promise.resolve
-        statusCode: 200
-        user: {}
+        ok: true
+        user:
+          team: {}
       
-      @createTeamStub = sinon.stub().returns Promise.resolve 409
+      @createTeamStub = sinon.stub().returns Promise.resolve
+        ok: false
+        statusCode: 409
       
       @room.robot.hack24client =
         getUser: @getUserStub
@@ -90,7 +98,7 @@ describe '@hubot create team X', ->
     it 'should fetch the user', ->
       expect(@getUserStub).to.have.been.calledWith('jerry')
 
-    it 'should create the team', ->
+    it 'should try to create the team', ->
       expect(@createTeamStub).to.have.been.calledWith('Top Bants', 'jerry')
 
     it 'should tell the user that the team already exists', ->
@@ -99,17 +107,20 @@ describe '@hubot create team X', ->
         ['hubot', "@jerry Sorry, but that team already exists!"]
       ]
 
-  describe 'when user and team do not already exist', ->
+  describe 'when user does not already exist and team does not already exist', ->
   
     before (done) ->
       @room = helper.createRoom()
       
       @getUserStub = sinon.stub().returns Promise.resolve
+        ok: false
         statusCode: 404
       
-      @createUserStub = sinon.stub().returns Promise.resolve 201
+      @createUserStub = sinon.stub().returns Promise.resolve
+        ok: true
       
-      @createTeamStub = sinon.stub().returns Promise.resolve 201
+      @createTeamStub = sinon.stub().returns Promise.resolve
+        ok: true
       
       @room.robot.hack24client =
         getUser: @getUserStub
@@ -136,15 +147,18 @@ describe '@hubot create team X', ->
         ['hubot', "@sarah Welcome to team Pineapple Express!"]
       ]
 
-  describe 'when creating user returns an unexpected code', ->
+  describe 'when user does not already exist and create user returns an unexpected code', ->
   
     before (done) ->
       @room = helper.createRoom()
       
       @getUserStub = sinon.stub().returns Promise.resolve
+        ok: false
         statusCode: 404
       
-      @createUserStub = sinon.stub().returns Promise.resolve 54
+      @createUserStub = sinon.stub().returns Promise.resolve
+        ok: false
+        statusCode: 54
 
       @room.robot.hack24client =
         getUser: @getUserStub
@@ -167,36 +181,29 @@ describe '@hubot create team X', ->
         ['hubot', "@hannah Sorry, I can't create your user account :frowning:"]
       ]
 
-  describe 'when creating the user succeeds and creating the team returns an unexpected code', ->
+  describe 'when user does not already exist and creating the team returns an unexpected code', ->
   
     before (done) ->
       @room = helper.createRoom()
       
-      @getUserStub = sinon.stub().returns Promise.resolve
-        statusCode: 404
-      
-      @createUserStub = sinon.stub().returns Promise.resolve 201
-      
-      @createTeamStub = sinon.stub().returns Promise.resolve 503
-
       @room.robot.hack24client =
-        getUser: @getUserStub
-        createUser: @createUserStub
-        createTeam: @createTeamStub
+        getUser: ->
+          Promise.resolve
+            ok: false
+            statusCode: 404
+        createUser: ->
+          Promise.resolve
+            ok: true
+            statusCode: 201
+        createTeam: ->
+          Promise.resolve
+            ok: false
+            statusCode: 503
 
       @room.user.say('sarah', '@hubot create team Whizzbang').then done
 
     after ->
       @room.destroy()
-
-    it 'should fetch the user', ->
-      expect(@getUserStub).to.have.been.calledWith('sarah')
-
-    it 'should create the user', ->
-      expect(@createUserStub).to.have.been.calledWith('sarah', 'sarah')
-
-    it 'should create the team', ->
-      expect(@createTeamStub).to.have.been.calledWith('Whizzbang', 'sarah')
 
     it 'should tell the user that the team could not be created', ->
       expect(@room.messages).to.eql [
@@ -211,9 +218,14 @@ describe '@hubot create team X', ->
 
       @room.robot.hack24client =
         getUser: ->
-          Promise.resolve({ statusCode: 200, user: { } })
+          Promise.resolve
+            ok: true
+            user:
+              team: {}
         createTeam: ->
-          Promise.resolve(503)
+          Promise.resolve
+            ok: false
+            statusCode: 503
 
       @room.user.say('sarah', '@hubot create team Whizzbang').then done
 
@@ -225,3 +237,97 @@ describe '@hubot create team X', ->
         ['sarah', '@hubot create team Whizzbang'],
         ['hubot', "@sarah Sorry, I can't create your team :frowning:"]
       ]
+
+  describe 'when getUser fails', ->
+  
+    before (done) ->
+      @room = helper.createRoom()
+      
+      @room.robot.hack24client =
+        getUser: ->
+          Promise.reject new Error('unknown')
+      
+      @room.user.say('sarah', '@hubot create team Rosie').then done
+
+    it 'should tell the user that there is a problem', ->
+      expect(@room.messages).to.eql [
+        ['sarah', '@hubot create team Rosie'],
+        ['hubot', '@sarah I\'m sorry Sir, there appears to be a big problem!']
+      ]
+    
+    after ->
+      @room.destroy()
+
+  describe 'when user does not exist and createUser fails', ->
+  
+    before (done) ->
+      @room = helper.createRoom()
+      
+      @room.robot.hack24client =
+        getUser: ->
+          Promise.resolve
+            ok: false
+            statusCode: 404
+        createUser: ->
+          Promise.reject new Error('unknown')
+      
+      @room.user.say('sarah', '@hubot create team Rosie').then done
+
+    it 'should tell the user that there is a problem', ->
+      expect(@room.messages).to.eql [
+        ['sarah', '@hubot create team Rosie'],
+        ['hubot', '@sarah I\'m sorry Sir, there appears to be a big problem!']
+      ]
+    
+    after ->
+      @room.destroy()
+
+  describe 'when created user and createTeam fails', ->
+  
+    before (done) ->
+      @room = helper.createRoom()
+      
+      @room.robot.hack24client =
+        getUser: ->
+          Promise.resolve
+            ok: true
+            user: {}
+        createUser: ->
+            ok: true
+        createTeam: ->
+          Promise.reject new Error('unknown')
+      
+      @room.user.say('sarah', '@hubot create team Rosie').then done
+
+    it 'should tell the user that there is a problem', ->
+      expect(@room.messages).to.eql [
+        ['sarah', '@hubot create team Rosie'],
+        ['hubot', '@sarah I\'m sorry Sir, there appears to be a big problem!']
+      ]
+    
+    after ->
+      @room.destroy()
+
+  describe 'when user already exists and createTeam fails', ->
+  
+    before (done) ->
+      @room = helper.createRoom()
+      
+      @room.robot.hack24client =
+        getUser: ->
+          Promise.resolve
+            ok: true
+            user: {}
+        createTeam: ->
+          Promise.reject new Error('unknown')
+      
+      @room.user.say('sarah', '@hubot create team Rosie').then done
+
+    it 'should tell the user that there is a problem', ->
+      expect(@room.messages).to.eql [
+        ['sarah', '@hubot create team Rosie'],
+        ['hubot', '@sarah I\'m sorry Sir, there appears to be a big problem!']
+      ]
+    
+    after ->
+      @room.destroy()

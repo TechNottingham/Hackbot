@@ -6,7 +6,7 @@ getAuth = () -> "#{process.env.HACKBOT_USERNAME}:#{process.env.HACKBOT_PASSWORD}
 class Client
 
   constructor: (robot) ->
-    @httpClient = HttpClient.create unless @robot
+    @httpClient = HttpClient.create
 
   createTeam: (teamName, userId) ->
     new Promise (resolve, reject) =>
@@ -21,12 +21,13 @@ class Client
                 type: 'users'
                 id: userId
               }]
-        
+
       @httpClient("#{process.env.HACK24API_URL}/teams", { auth: getAuth() })
         .header('Content-Type', 'application/vnd.api+json')
         .header('Accept', 'application/vnd.api+json')
         .post(body) (err, res, body) ->
           if err? then return reject err
+          if res.statusCode is 403 then return reject(new Error 'Forbidden')
           resolve 
             ok: res.statusCode == 201
             statusCode: res.statusCode
@@ -39,12 +40,13 @@ class Client
           id: userId
           attributes:
             name: userName
-          
+      
       @httpClient("#{process.env.HACK24API_URL}/users", { auth: getAuth() })
         .header('Content-Type', 'application/vnd.api+json')
         .header('Accept', 'application/vnd.api+json')
         .post(body) (err, res, body) ->
           if err? then return reject err
+          if res.statusCode is 403 then return reject(new Error 'Forbidden')
           resolve
             ok: res.statusCode == 201
             statusCode: res.statusCode
@@ -54,6 +56,7 @@ class Client
       @httpClient("#{process.env.HACK24API_URL}/api")
         .get() (err, res, body) ->
           if err? then return reject err
+          if res.statusCode is 403 then return reject(new Error 'Forbidden')
           resolve
             ok: res.statusCode == 200
             statusCode: res.statusCode
@@ -64,6 +67,7 @@ class Client
         .header('Accept', 'application/vnd.api+json')
         .get() (err, res, body) ->
           if err? then return reject err
+          if res.statusCode is 403 then return reject(new Error 'Forbidden')
           
           result =
             ok: res.statusCode == 200
@@ -82,6 +86,7 @@ class Client
         .header('Accept', 'application/vnd.api+json')
         .get() (err, res, body) ->
           if err? then return reject err
+          if res.statusCode is 403 then return reject(new Error 'Forbidden')
           
           result =
             ok: res.statusCode == 200
@@ -102,11 +107,12 @@ class Client
           id: userId
         }]
         
-      @httpClient("#{process.env.HACK24API_URL}/teams/#{encodeURIComponent(teamId)}/members")
+      @httpClient("#{process.env.HACK24API_URL}/teams/#{encodeURIComponent(teamId)}/members", { auth: getAuth() })
         .header('Accept', 'application/vnd.api+json')
         .header('Content-Type', 'application/vnd.api+json')
         .delete(body) (err, res, body) ->
           if err? then return reject err
+          if res.statusCode is 403 then return reject(new Error 'Forbidden')
           
           result =
             ok: res.statusCode == 204

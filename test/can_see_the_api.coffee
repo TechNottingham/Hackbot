@@ -12,7 +12,8 @@ describe 'Can see the API', ->
       
       @room.robot.hack24client =
         checkApi: ->
-          Promise.resolve(200)
+          Promise.resolve
+            ok: true
       
       @room.user.say('bob', '@hubot can you see the api?').then done
 
@@ -33,7 +34,9 @@ describe 'Can see the API', ->
       
       @room.robot.hack24client =
         checkApi: ->
-          Promise.resolve(99)
+          Promise.resolve
+            ok: false
+            statusCode: 99
       
       @room.user.say('bob', '@hubot can you see the api?').then done
 
