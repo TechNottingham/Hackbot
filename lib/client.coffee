@@ -1,58 +1,117 @@
+HttpClient = require 'scoped-http-client'
+{Store} = require('yayson')()
+
 getAuth = () -> "#{process.env.HACKBOT_USERNAME}:#{process.env.HACKBOT_PASSWORD}"
 
 class Client
 
-  constructor: (@robot) ->
+  constructor: (robot) ->
+    @httpClient = HttpClient.create unless @robot
 
-  createTeam: (teamName, userId) =>
+  createTeam: (teamName, userId) ->
     new Promise (resolve, reject) =>
       body = JSON.stringify 
-        name: teamName
-        members: [ userId ]
+        data:
+          type: 'teams'
+          attributes:
+            name: teamName
+          relationships:
+            members:
+              data: [{
+                type: 'users'
+                id: userId
+              }]
         
-      @robot.http("#{process.env.HACK24API_URL}/teams", { auth: getAuth() })
-        .header('Content-Type', 'application/json')
+      @httpClient("#{process.env.HACK24API_URL}/teams", { auth: getAuth() })
+        .header('Content-Type', 'application/vnd.api+json')
+        .header('Accept', 'application/vnd.api+json')
         .post(body) (err, res, body) ->
           if err? then return reject err
-          resolve res.statusCode
+          resolve 
+            ok: res.statusCode == 201
+            statusCode: res.statusCode
 
-  createUser: (userId, userName) =>
+  createUser: (userId, userName) ->
     new Promise (resolve, reject) =>
       body = JSON.stringify 
-        userid: userId
-        name: userName
+        data:
+          type: 'users'
+          id: userId
+          attributes:
+            name: userName
           
-      @robot.http("#{process.env.HACK24API_URL}/users", { auth: getAuth() })
-        .header('Content-Type', 'application/json')
+      @httpClient("#{process.env.HACK24API_URL}/users", { auth: getAuth() })
+        .header('Content-Type', 'application/vnd.api+json')
+        .header('Accept', 'application/vnd.api+json')
         .post(body) (err, res, body) ->
           if err? then return reject err
-          resolve res.statusCode
+          resolve
+            ok: res.statusCode == 201
+            statusCode: res.statusCode
   
-  checkApi: =>
+  checkApi: ->
     new Promise (resolve, reject) =>
-      @robot.http("#{process.env.HACK24API_URL}/api")
+      @httpClient("#{process.env.HACK24API_URL}/api")
         .get() (err, res, body) ->
           if err? then return reject err
-          resolve(res.statusCode)
+          resolve
+            ok: res.statusCode == 200
+            statusCode: res.statusCode
         
-  getUser: (userId) =>
+  getUser: (userId) ->
     new Promise (resolve, reject) =>
-      @robot.http("#{process.env.HACK24API_URL}/users/#{userId}")
-        .header('Accept', 'application/json')
+      @httpClient("#{process.env.HACK24API_URL}/users/#{userId}")
+        .header('Accept', 'application/vnd.api+json')
         .get() (err, res, body) ->
           if err? then return reject err
-          result = { statusCode: res.statusCode }
-          if res.statusCode is 200 then result.user = JSON.parse(body)
+          
+          result =
+            ok: res.statusCode == 200
+            statusCode: res.statusCode
+            
+          if result.ok
+            store = new Store
+            user = store.sync JSON.parse(body)
+            result.user = user
+              
           resolve(result)
         
-  getTeam: (teamId) =>
+  getTeam: (teamId) ->
     new Promise (resolve, reject) =>
-      @robot.http("#{process.env.HACK24API_URL}/teams/#{encodeURIComponent(teamId)}")
-        .header('Accept', 'application/json')
+      @httpClient("#{process.env.HACK24API_URL}/teams/#{encodeURIComponent(teamId)}")
+        .header('Accept', 'application/vnd.api+json')
         .get() (err, res, body) ->
           if err? then return reject err
-          result = { statusCode: res.statusCode }
-          if res.statusCode is 200 then result.team = JSON.parse(body)
+          
+          result =
+            ok: res.statusCode == 200
+            statusCode: res.statusCode
+            
+          if result.ok
+            store = new Store
+            team = store.sync JSON.parse(body)
+            result.team = team
+              
+          resolve(result)
+        
+  removeTeamMember: (teamId, userId) ->
+    new Promise (resolve, reject) =>
+      body = JSON.stringify 
+        data: [{
+          type: 'users'
+          id: userId
+        }]
+        
+      @httpClient("#{process.env.HACK24API_URL}/teams/#{encodeURIComponent(teamId)}/members")
+        .header('Accept', 'application/vnd.api+json')
+        .header('Content-Type', 'application/vnd.api+json')
+        .delete(body) (err, res, body) ->
+          if err? then return reject err
+          
+          result =
+            ok: res.statusCode == 204
+            statusCode: res.statusCode
+            
           resolve(result)
 
 module.exports.Client = Client
