@@ -23,14 +23,17 @@
     "hubot-scripts": "^2.16.2",
     "hubot-shipit": "^0.2.0",
     "hubot-slack": "^3.4.2",
-    "slug": "^0.9.1"
+    "slug": "^0.9.1",
+    "yayson": "^2.0.1"
   },
   "engines": {
     "node": "5.4.x"
   },
   "devDependencies": {
+    "body-parser": "^1.15.0",
     "chai": "^3.5.0",
     "coffee-script": "^1.10.0",
+    "express": "^3.21.2",
     "hubot-test-helper": "^1.4.4",
     "mocha": "^2.4.5",
     "sinon": "^1.17.3",
