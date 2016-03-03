@@ -5,8 +5,8 @@
   "author": "Andrew Seward <abseward@googlemail.com>",
   "description": "Hackbot is here to help you hack",
   "scripts": {
-    "test": "mocha --compilers coffee:coffee-script/register --reporter spec",
-    "test:watch": "mocha --compilers coffee:coffee-script/register --reporter spec -w"
+    "test": "mocha --compilers coffee:coffee-script/register -R dot",
+    "test:watch": "mocha --compilers coffee:coffee-script/register -R dot -w"
   },
   "dependencies": {
     "hubot": "^2.18.0",

@@ -13,12 +13,17 @@ describe '@hubot leave my team', ->
     before (done) ->
       @room = helper.createRoom()
       
+      @userId = 'micah'
+      @userEmail = 'micah.micah~micah'
+      @existingTeamId = 'ocean-mongrels'
+      @existingTeamName = 'Ocean Mongrels'
+      
       @getUserStub = sinon.stub().returns Promise.resolve
         ok: true
         user:
           team:
-            id: 'ocean-mongrels'
-            name: 'Ocean Mongrels'
+            id: @existingTeamId
+            name: @existingTeamName
       
       @removeTeamMemberStub = sinon.stub().returns Promise.resolve
         ok: true
@@ -26,19 +31,22 @@ describe '@hubot leave my team', ->
       @room.robot.hack24client =
         getUser: @getUserStub
         removeTeamMember: @removeTeamMemberStub
+        
+      @room.robot.brain.data.users[@userId] =
+        email_address: @userEmail
       
-      @room.user.say('micah', '@hubot leave my team').then done
+      @room.user.say(@userId, '@hubot leave my team').then done
 
     it 'should get the user', ->
-      expect(@getUserStub).to.have.been.calledWith('micah')
+      expect(@getUserStub).to.have.been.calledWith(@userId)
 
     it 'should update the team, excluding the current user in the member list', ->
-      expect(@removeTeamMemberStub).to.have.been.calledWith('ocean-mongrels', 'micah' )
+      expect(@removeTeamMemberStub).to.have.been.calledWith(@existingTeamId, @userId, @userEmail)
 
     it 'should tell the user that they have left the team', ->
       expect(@room.messages).to.eql [
-        ['micah', '@hubot leave my team'],
-        ['hubot', '@micah OK, you\'ve been removed from team "Ocean Mongrels"']
+        [@userId, '@hubot leave my team'],
+        ['hubot', "@#{@userId} OK, you\'ve been removed from team \"#{@existingTeamName}\""]
       ]
     
     after ->
@@ -49,6 +57,8 @@ describe '@hubot leave my team', ->
     before (done) ->
       @room = helper.createRoom()
       
+      @userId = 'sarah'
+      
       @getUserStub = sinon.stub().returns Promise.resolve
         ok: true
         user:
@@ -57,16 +67,19 @@ describe '@hubot leave my team', ->
       
       @room.robot.hack24client =
         getUser: @getUserStub
+        
+      @room.robot.brain.data.users[@userId] =
+        email_address: 'asdlkjalkdsjas'
       
-      @room.user.say('sarah', '@hubot leave my team').then done
+      @room.user.say(@userId, '@hubot leave my team').then done
 
     it 'should get the user', ->
-      expect(@getUserStub).to.have.been.calledWith('sarah')
+      expect(@getUserStub).to.have.been.calledWith(@userId)
 
     it 'should tell the user that they are not in a team', ->
       expect(@room.messages).to.eql [
-        ['sarah', '@hubot leave my team'],
-        ['hubot', '@sarah You\'re not in a team! :goberserk:']
+        [@userId, '@hubot leave my team'],
+        ['hubot', "@#{@userId} You're not in a team! :goberserk:"]
       ]
     
     after ->
@@ -77,22 +90,27 @@ describe '@hubot leave my team', ->
     before (done) ->
       @room = helper.createRoom()
       
+      @userId = 'sarah'
+      
       @getUserStub = sinon.stub().returns Promise.resolve
         ok: false
         statusCode: 404
       
       @room.robot.hack24client =
         getUser: @getUserStub
+        
+      @room.robot.brain.data.users[@userId] =
+        email_address: 'sdfsfdsfsdf'
       
-      @room.user.say('sarah', '@hubot leave my team').then done
+      @room.user.say(@userId, '@hubot leave my team').then done
 
     it 'should get the user', ->
-      expect(@getUserStub).to.have.been.calledWith('sarah')
+      expect(@getUserStub).to.have.been.calledWith(@userId)
 
     it 'should tell the user that they are not in a team', ->
       expect(@room.messages).to.eql [
-        ['sarah', '@hubot leave my team'],
-        ['hubot', '@sarah You\'re not in a team! :goberserk:']
+        [@userId, '@hubot leave my team'],
+        ['hubot', "@#{@userId} You're not in a team! :goberserk:"]
       ]
     
     after ->

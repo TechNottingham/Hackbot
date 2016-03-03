@@ -1,14 +1,14 @@
 HttpClient = require 'scoped-http-client'
 {Store} = require('yayson')()
 
-getAuth = () -> "#{process.env.HACKBOT_USERNAME}:#{process.env.HACKBOT_PASSWORD}"
+getAuth = (emailAddress) -> "#{emailAddress}:#{process.env.HACKBOT_PASSWORD}"
 
 class Client
 
   constructor: (robot) ->
-    @httpClient = HttpClient.create
+    @httpClient = if robot? then robot.http.bind(robot) else HttpClient.create
 
-  createTeam: (teamName, userId) ->
+  createTeam: (teamName, userId, emailAddress) ->
     new Promise (resolve, reject) =>
       body = JSON.stringify 
         data:
@@ -22,7 +22,7 @@ class Client
                 id: userId
               }]
 
-      @httpClient("#{process.env.HACK24API_URL}/teams", { auth: getAuth() })
+      @httpClient("#{process.env.HACK24API_URL}/teams", { auth: getAuth(emailAddress) })
         .header('Content-Type', 'application/vnd.api+json')
         .header('Accept', 'application/vnd.api+json')
         .post(body) (err, res, body) ->
@@ -32,7 +32,7 @@ class Client
             ok: res.statusCode == 201
             statusCode: res.statusCode
 
-  createUser: (userId, userName) ->
+  createUser: (userId, userName, emailAddress) ->
     new Promise (resolve, reject) =>
       body = JSON.stringify 
         data:
@@ -41,7 +41,7 @@ class Client
           attributes:
             name: userName
       
-      @httpClient("#{process.env.HACK24API_URL}/users", { auth: getAuth() })
+      @httpClient("#{process.env.HACK24API_URL}/users", { auth: getAuth(emailAddress) })
         .header('Content-Type', 'application/vnd.api+json')
         .header('Accept', 'application/vnd.api+json')
         .post(body) (err, res, body) ->
@@ -99,7 +99,7 @@ class Client
               
           resolve(result)
         
-  removeTeamMember: (teamId, userId) ->
+  removeTeamMember: (teamId, userId, emailAddress) ->
     new Promise (resolve, reject) =>
       body = JSON.stringify 
         data: [{
@@ -107,7 +107,7 @@ class Client
           id: userId
         }]
         
-      @httpClient("#{process.env.HACK24API_URL}/teams/#{encodeURIComponent(teamId)}/members", { auth: getAuth() })
+      @httpClient("#{process.env.HACK24API_URL}/teams/#{encodeURIComponent(teamId)}/members", { auth: getAuth(emailAddress) })
         .header('Accept', 'application/vnd.api+json')
         .header('Content-Type', 'application/vnd.api+json')
         .delete(body) (err, res, body) ->

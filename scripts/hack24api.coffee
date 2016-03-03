@@ -32,7 +32,7 @@ module.exports = (robot) ->
         else
           response.reply "I'm sorry Sir, there appears to be a problem; something about \"#{res.statusCode}\""
       .catch (err) ->
-        console.log "API check failed #{err.message}"
+        console.error "API check failed: #{err.message}"
         response.reply 'I\'m sorry Sir, there appears to be a big problem!'
 
 
@@ -52,11 +52,13 @@ module.exports = (robot) ->
     robot.hack24client.getUser(userId)
       .then (res) ->
       
+        email_address = robot.brain.data.users[userId].email_address
+        
         if res.statusCode is 404
-          return robot.hack24client.createUser(userId, userName)
+          return robot.hack24client.createUser(userId, userName, email_address)
             .then (res) ->
               if res.ok
-                return robot.hack24client.createTeam(teamName, userId)
+                return robot.hack24client.createTeam(teamName, userId, email_address)
                   .then (res) ->
                     if res.ok
                       return response.reply "Welcome to team #{teamName}!"
@@ -72,7 +74,7 @@ module.exports = (robot) ->
           response.reply "You're already a member of #{res.user.team.name}!"
           return
         
-        robot.hack24client.createTeam(teamName, userId)
+        robot.hack24client.createTeam(teamName, userId, email_address)
           .then (res) ->
             if res.ok
               return response.reply "Welcome to team #{teamName}!"
@@ -116,8 +118,10 @@ module.exports = (robot) ->
       .then (res) ->
         if !res.ok or res.user.team.id is undefined
           return response.reply 'You\'re not in a team! :goberserk:'
+          
+        email_address = robot.brain.data.users[userId].email_address
 
-        return robot.hack24client.removeTeamMember(res.user.team.id, userId)
+        return robot.hack24client.removeTeamMember(res.user.team.id, userId, email_address)
           .then (_res) ->
             response.reply "OK, you've been removed from team \"#{res.user.team.name}\""
         

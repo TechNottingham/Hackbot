@@ -70,14 +70,15 @@ describe 'Hack24 API Client', ->
   
       before (done) ->
         process.env.HACK24API_URL = 'http://localhost:12345'
-        user = process.env.HACKBOT_USERNAME = 'net'
-        pass = process.env.HACKBOT_PASSWORD = 'sky'
-        @expectedAuth = "Basic #{new Buffer("#{user}:#{pass}").toString('base64')}"
+        pass = process.env.HACKBOT_PASSWORD = '65456465464654'
         
         api = express()
         
         @teamName = 'Pineapple Express'
         @userId = 'U12345'
+        email_address = 'some@guy.com'
+        
+        @expectedAuth = "Basic #{new Buffer("#{email_address}:#{pass}").toString('base64')}"
         
         api.post '/teams', apiJsonParser, (req, res) =>
           @contentType = req.headers['content-type']
@@ -89,7 +90,7 @@ describe 'Hack24 API Client', ->
         client = new Client
         
         @server = api.listen 12345, (err) =>
-          client.createTeam(@teamName, @userId) 
+          client.createTeam(@teamName, @userId, email_address) 
             .then (@result) =>
               done()
             .catch done
@@ -477,14 +478,15 @@ describe 'Hack24 API Client', ->
     
       before (done) ->
         process.env.HACK24API_URL = 'http://localhost:12345'
-        user = process.env.HACKBOT_USERNAME = 'net'
-        pass = process.env.HACKBOT_PASSWORD = 'sky'
-        @expectedAuth = "Basic #{new Buffer("#{user}:#{pass}").toString('base64')}"
+        pass = process.env.HACKBOT_PASSWORD = 'slkjfsjkfjks'
         
         api = express()
         
         @userId = 'U12345'
         @userName = 'Pineapple Express'
+        email_address = 'lkjasdkljasd@gfhjdgf.daskjd'
+        
+        @expectedAuth = "Basic #{new Buffer("#{email_address}:#{pass}").toString('base64')}"
         
         api.post '/users', apiJsonParser, (req, res) =>
           @contentType = req.headers['content-type']
@@ -496,7 +498,7 @@ describe 'Hack24 API Client', ->
         client = new Client
         
         @server = api.listen 12345, (err) =>
-          client.createUser(@userId, @userName) 
+          client.createUser(@userId, @userName, email_address) 
             .then (@result) =>
               done()
             .catch done
@@ -587,14 +589,15 @@ describe 'Hack24 API Client', ->
   
       before (done) ->
         process.env.HACK24API_URL = 'http://localhost:12345'
-        user = process.env.HACKBOT_USERNAME = 'net'
         pass = process.env.HACKBOT_PASSWORD = 'sky'
-        @expectedAuth = "Basic #{new Buffer("#{user}:#{pass}").toString('base64')}"
         
         api = express()
         
         @teamId = 'swan-song'
         @userId = 'U12345'
+        emailAddress = 'asdas@asd0-9098'
+        
+        @expectedAuth = "Basic #{new Buffer("#{emailAddress}:#{pass}").toString('base64')}"
         
         api.delete "/teams/#{@teamId}/members", apiJsonParser, (req, res) =>
           @contentType = req.headers['content-type']
@@ -606,7 +609,7 @@ describe 'Hack24 API Client', ->
         client = new Client
         
         @server = api.listen 12345, (err) =>
-          client.removeTeamMember(@teamId, @userId) 
+          client.removeTeamMember(@teamId, @userId, emailAddress) 
             .then (@result) =>
               done()
             .catch done
