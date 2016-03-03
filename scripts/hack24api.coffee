@@ -67,7 +67,10 @@ module.exports = (robot) ->
                       return response.reply 'Sorry, but that team already exists!'
                       
                     response.reply 'Sorry, I can\'t create your team :frowning:'
-                    
+              
+              if res.statusCode is 403
+                return response.reply 'Sorry, you don\'t have permission to create a team.'
+                  
               response.reply 'Sorry, I can\'t create your user account :frowning:'
               
         if res.user.team.id isnt undefined
@@ -79,8 +82,11 @@ module.exports = (robot) ->
             if res.ok
               return response.reply "Welcome to team #{teamName}!"
               
+            if res.statusCode is 403
+              return response.reply 'Sorry, you don\'t have permission to create a team.'
+              
             if res.statusCode is 409
-              return response.reply "Sorry, but that team already exists!"
+              return response.reply 'Sorry, but that team already exists!'
                   
             response.reply 'Sorry, I can\'t create your team :frowning:'
             
@@ -123,7 +129,13 @@ module.exports = (robot) ->
 
         return robot.hack24client.removeTeamMember(res.user.team.id, userId, email_address)
           .then (_res) ->
-            response.reply "OK, you've been removed from team \"#{res.user.team.name}\""
+            if _res.ok
+              return response.reply "OK, you've been removed from team \"#{res.user.team.name}\""
+            
+            if _res.statusCode is 403
+              return response.reply "Sorry, you don't have permission to leave your team."
+            
+            response.reply "Sorry, I tried, but something went wrong."
         
       .catch (err) ->
         response.reply 'I\'m sorry Sir, there appears to be a big problem!'

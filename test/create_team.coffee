@@ -50,6 +50,43 @@ describe '@hubot create team X', ->
         ['hubot', "@#{@userId} Welcome to team #{@teamName}!"]
       ]
 
+  describe 'when user already exists and not a registered attendee', ->
+  
+    before (done) ->
+      @room = helper.createRoom()
+      
+      @userId = 'bob'
+      @userEmail = 'pinny.espresso@food.co'
+      @teamName = 'Pineapple Express'
+      
+      @getUserStub = sinon.stub().returns Promise.resolve
+        ok: true
+        user:
+          id: @userId
+          team: {}
+      
+      @createTeamStub = sinon.stub().returns Promise.resolve
+        ok: false
+        statusCode: 403
+      
+      @room.robot.hack24client =
+        getUser: @getUserStub
+        createTeam: @createTeamStub
+        
+      @room.robot.brain.data.users[@userId] =
+        email_address: @userEmail
+      
+      @room.user.say(@userId, "@hubot create team #{@teamName}").then done
+
+    after ->
+      @room.destroy()
+
+    it 'should welcome the user to the team', ->
+      expect(@room.messages).to.eql [
+        [@userId, "@hubot create team #{@teamName}"],
+        ['hubot', "@#{@userId} Sorry, you don't have permission to create a team."]
+      ]
+
   describe 'when user already exists and is already in a team', ->
   
     before (done) ->
@@ -175,6 +212,42 @@ describe '@hubot create team X', ->
       expect(@room.messages).to.eql [
         [@userId, "@hubot create team #{@teamName}"],
         ['hubot', "@#{@userId} Welcome to team #{@teamName}!"]
+      ]
+
+  describe 'when user does not already exist and not a registered attendee', ->
+  
+    before (done) ->
+      @room = helper.createRoom()
+      
+      @userId = 'sarah'
+      @userEmail = 'sarah@sarah.sarah'
+      @teamName = 'Pineapple Express'
+      
+      @getUserStub = sinon.stub().returns Promise.resolve
+        ok: false
+        statusCode: 404
+      
+      @createUserStub = sinon.stub().returns Promise.resolve
+        ok: false
+        statusCode: 403
+      
+      @room.robot.hack24client =
+        getUser: @getUserStub
+        createUser: @createUserStub
+        createTeam: @createTeamStub
+        
+      @room.robot.brain.data.users[@userId] =
+        email_address: @userEmail
+      
+      @room.user.say(@userId, "@hubot create team #{@teamName}").then done
+
+    after ->
+      @room.destroy()
+
+    it 'should welcome the new user to the new team', ->
+      expect(@room.messages).to.eql [
+        [@userId, "@hubot create team #{@teamName}"],
+        ['hubot', "@#{@userId} Sorry, you don\'t have permission to create a team."]
       ]
 
   describe 'when user does not already exist and create user returns an unexpected code', ->

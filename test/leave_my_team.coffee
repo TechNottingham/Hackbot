@@ -52,6 +52,45 @@ describe '@hubot leave my team', ->
     after ->
       @room.destroy()
 
+  describe 'when not a registered attendee', ->
+  
+    before (done) ->
+      @room = helper.createRoom()
+      
+      @userId = 'micah'
+      @userEmail = 'micah.micah~micah'
+      @existingTeamId = 'ocean-mongrels'
+      @existingTeamName = 'Ocean Mongrels'
+      
+      @getUserStub = sinon.stub().returns Promise.resolve
+        ok: true
+        user:
+          team:
+            id: @existingTeamId
+            name: @existingTeamName
+      
+      @removeTeamMemberStub = sinon.stub().returns Promise.resolve
+        ok: false
+        statusCode: 403
+      
+      @room.robot.hack24client =
+        getUser: @getUserStub
+        removeTeamMember: @removeTeamMemberStub
+        
+      @room.robot.brain.data.users[@userId] =
+        email_address: @userEmail
+      
+      @room.user.say(@userId, '@hubot leave my team').then done
+
+    it 'should tell the user that they have left the team', ->
+      expect(@room.messages).to.eql [
+        [@userId, '@hubot leave my team'],
+        ['hubot', "@#{@userId} Sorry, you don't have permission to leave your team."]
+      ]
+    
+    after ->
+      @room.destroy()
+
   describe 'when not in a team', ->
   
     before (done) ->
