@@ -161,6 +161,9 @@ module.exports = (robot) ->
       
     robot.hack24client.getUser(userId)
       .then (res) ->
+        if res.user.team == null
+          return response.reply "I would, but you're not in a team..."
+
         teamId = res.user.team.id
         emailAddress = robot.brain.data.users[userId].email_address
         
@@ -170,7 +173,10 @@ module.exports = (robot) ->
             otherUserId = userId
             break
             
-        robot.hack24client.addUserToTeam(teamId, otherUserId, emailAddress)
-        
-        response.reply 'Done!'
+        return robot.hack24client.addUserToTeam(teamId, otherUserId, emailAddress)
+          .then (res) ->
+            if res.statusCode is 403
+              return response.reply "Sorry, you don't have permission to add people to your team."
+              
+            response.reply 'Done!'
         
