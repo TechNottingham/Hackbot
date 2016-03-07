@@ -154,3 +154,23 @@ module.exports = (robot) ->
         
       .catch (err) ->
         response.reply 'I\'m sorry Sir, there appears to be a big problem!'
+        
+  robot.respond /add @(.+) to my team/, (response) ->
+    otherUsername = response.match[1]
+    userId = response.message.user.id
+      
+    robot.hack24client.getUser(userId)
+      .then (res) ->
+        teamId = res.user.team.id
+        emailAddress = robot.brain.data.users[userId].email_address
+        
+        otherUserId = ""
+        for userId, user of robot.brain.data.users
+          if user.name == otherUsername
+            otherUserId = userId
+            break
+            
+        robot.hack24client.addUserToTeam(teamId, otherUserId, emailAddress)
+        
+        response.reply 'Done!'
+        

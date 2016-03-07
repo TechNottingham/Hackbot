@@ -754,3 +754,83 @@ describe 'Hack24 API Client', ->
 
       it 'should reject with an error', ->
         expect(@err.message).to.equal('socket hang up')
+
+
+  describe '#addUserToTeam', ->
+    
+    describe 'when succeeds', ->
+      
+      before (done) ->
+        process.env.HACK24API_URL = 'http://localhost:12345'
+        pass = process.env.HACKBOT_PASSWORD = 'slkjfsjkfjks'
+        
+        api = express()
+        
+        @userId = 'U12345'
+        @userName = 'Pineapple Dicxpress'
+        email_address = 'lkjasdkljasd@gfhjdgf.daskjd'
+        
+        @expectedAuth = "Basic #{new Buffer("#{email_address}:#{pass}").toString('base64')}"
+        
+        api.patch '/teams/:teamId/members', apiJsonParser, (req, res) =>
+          @contentType = req.headers['content-type']
+          @accept = req.headers['accept']
+          @authorization = req.headers['authorization']
+          @body = req.body
+          @teamId = req.params.teamId
+          res.status(201).send()
+        
+        client = new Client
+        
+        @server = api.listen 12345, (err) =>
+          client.addUserToTeam(@teamId, @userId, email_address)
+            .then (@result) =>
+              done()
+            .catch done
+      
+      after (done) ->
+        @server.close done
+
+      it 'should resolve with status code 201 Created', ->
+        expect(@result.statusCode).to.equal(201)
+
+      it 'should resolve with OK', ->
+        expect(@result.ok).to.be.true
+
+      it 'should request with accept application/vnd.api+json', ->
+        expect(@accept).to.equal('application/vnd.api+json')
+
+      it 'should request with content-type application/vnd.api+json', ->
+        expect(@contentType).to.equal('application/vnd.api+json')
+
+      it 'should request with the expected authorization', ->
+        expect(@authorization).to.equal(@expectedAuth)
+
+      it 'should request to create the expected user', ->
+        expect(@body.data[0].type).to.equal('users')
+        expect(@body.data[0].id).to.equal(@userId)
+          
+    describe 'when request errors', ->
+  
+      before (done) ->
+        process.env.HACK24API_URL = 'http://localhost:12345'
+        
+        api = express()
+        
+        api.use (req, res) ->
+          res.socket.destroy()
+
+        client = new Client
+        
+        @server = api.listen 12345, (err) =>
+          client.addUserToTeam('some team', 'some user', 'some email') 
+            .then ->
+              done(new Error 'Promise resolved')
+            .catch (@err) =>
+              done()
+      
+      after (done) ->
+        @server.close done
+
+      it 'should reject with an error', ->
+        expect(@err.message).to.equal('socket hang up')
