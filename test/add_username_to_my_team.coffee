@@ -20,12 +20,17 @@ describe '@hubot add @username to my team', ->
       @existingTeamId = 'ocean-mongrels'
       @existingTeamName = 'Ocean Mongrels'
       
-      @getUserStub = sinon.stub().returns Promise.resolve
+      @getUserStub = sinon.stub()
+      @getUserStub.withArgs(@userId).returns Promise.resolve
         ok: true
         user:
           team:
             id: @existingTeamId
             name: @existingTeamName
+            
+      @getUserStub.withArgs(@otherUserId).returns Promise.resolve
+        ok: true
+        statusCode: 200
       
       @addUserToTeamStub = sinon.stub().returns Promise.resolve
         ok: true
@@ -37,12 +42,16 @@ describe '@hubot add @username to my team', ->
       @room.robot.brain.data.users[@userId] =
         email_address: @userEmail
       @room.robot.brain.data.users[@otherUserId] =
+        id: @otherUserId
         name: @otherUserUsername
       
       @room.user.say(@userId, "@hubot add @#{@otherUserUsername} to my team").then done
 
     it 'should get the current user', ->
       expect(@getUserStub).to.have.been.calledWith(@userId)
+      
+    it 'should get the other user', ->
+      expect(@getUserStub).to.have.been.calledWith(@otherUserId)
 
     it 'should add the other user to the team', ->
       expect(@addUserToTeamStub).to.have.been.calledWith(@existingTeamId, @otherUserId, @userEmail)
@@ -125,6 +134,70 @@ describe '@hubot add @username to my team', ->
       expect(@room.messages).to.eql [
         [@userId, "@hubot add @#{@otherUserUsername} to my team"],
         ['hubot', "@#{@userId} I would, but you're not in a team..."]
+      ]
+    
+    after ->
+      @room.destroy()
+
+  describe 'when user is not already a member', ->
+  
+    before (done) ->
+      @room = helper.createRoom()
+      
+      @userId = 'micah'
+      @userEmail = 'micah.micah~micah'
+      @otherUserId = 'polly'
+      @otherUserUsername = 'pollygrafanaasa'
+      @existingTeamId = 'ocean-mongrels'
+      @existingTeamName = 'Ocean Mongrels'
+      
+      @getUserStub = sinon.stub()
+      @getUserStub.withArgs(@userId).returns Promise.resolve
+        ok: true
+        user:
+          team:
+            id: @existingTeamId
+            name: @existingTeamName
+            
+      @getUserStub.withArgs(@otherUserId).returns Promise.resolve
+        ok: false
+        statusCode: 404
+      
+      @createUserStub = sinon.stub().returns Promise.resolve
+        ok: true
+      
+      @addUserToTeamStub = sinon.stub().returns Promise.resolve
+        ok: true
+
+      @room.robot.hack24client =
+        getUser: @getUserStub
+        addUserToTeam: @addUserToTeamStub
+        createUser: @createUserStub
+        
+      @room.robot.brain.data.users[@userId] =
+        email_address: @userEmail
+      @room.robot.brain.data.users[@otherUserId] =
+        id: @otherUserId
+        name: @otherUserUsername
+      
+      @room.user.say(@userId, "@hubot add @#{@otherUserUsername} to my team").then done
+
+    it 'should get the current user', ->
+      expect(@getUserStub).to.have.been.calledWith(@userId)
+      
+    it 'should get the other user', ->
+      expect(@getUserStub).to.have.been.calledWith(@otherUserId)
+
+    it 'should create the other user', ->
+      expect(@createUserStub).to.have.been.calledWith(@otherUserId, @otherUserUsername, @userEmail)
+
+    it 'should add the other user to the team', ->
+      expect(@addUserToTeamStub).to.have.been.calledWith(@existingTeamId, @otherUserId, @userEmail)
+
+    it 'should tell the user that the command has completed', ->
+      expect(@room.messages).to.eql [
+        [@userId, "@hubot add @#{@otherUserUsername} to my team"],
+        ['hubot', "@#{@userId} Done!"]
       ]
     
     after ->
