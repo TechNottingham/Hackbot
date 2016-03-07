@@ -152,7 +152,7 @@ class Client
       @httpClient("#{process.env.HACK24API_URL}/teams/#{teamId}/members", { auth: getAuth(emailAddress) })
         .header('Accept', 'application/vnd.api+json')
         .header('Content-Type', 'application/vnd.api+json')
-        .patch(body) (err, res, body) ->
+        .post(body) (err, res, body) ->
           if err? then return reject err
 
           result =

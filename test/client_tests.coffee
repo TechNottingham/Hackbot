@@ -772,7 +772,7 @@ describe 'Hack24 API Client', ->
         
         @expectedAuth = "Basic #{new Buffer("#{email_address}:#{pass}").toString('base64')}"
         
-        api.patch '/teams/:teamId/members', apiJsonParser, (req, res) =>
+        api.post '/teams/:teamId/members', apiJsonParser, (req, res) =>
           @contentType = req.headers['content-type']
           @accept = req.headers['accept']
           @authorization = req.headers['authorization']
