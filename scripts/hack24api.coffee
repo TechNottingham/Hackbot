@@ -191,3 +191,17 @@ module.exports = (robot) ->
               robot.hack24client.createUser(otherUser.id, otherUser.name, emailAddress)
                 .then (res) ->
                   return addUserToTeam teamId, otherUser.id, emailAddress
+
+
+  robot.respond /tell me about my team/i, (response) ->
+    userId = response.message.user.id
+
+    robot.hack24client.getUser(userId)
+      .then (res) ->
+        memberList = res.user.team.members.map((member) => member.name)
+        
+        noun = if res.user.team.members.length == 1 then 'member' else 'members'
+
+        response.reply "\"#{res.user.team.name}\" has #{res.user.team.members.length} #{noun}: #{memberList.join(', ')}" 
+      .catch (err) ->
+        response.reply 'I\'m sorry Sir, there appears to be a big problem!'
