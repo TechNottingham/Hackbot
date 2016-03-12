@@ -42,6 +42,7 @@ module.exports = (robot) ->
   robot.respond /my id/i, (response) ->
     response.reply "Your id is #{response.message.user.id}"
 
+
   robot.respond /create team (.*)/i, (response) ->
     userId = response.message.user.id
     userName = response.message.user.name
@@ -91,6 +92,7 @@ module.exports = (robot) ->
     .catch (err) ->
         response.reply 'I\'m sorry Sir, there appears to be a big problem!'
 
+
   robot.respond /tell me about team (.*)/i, (response) ->
     teamId = slugify(response.match[1])
 
@@ -101,16 +103,18 @@ module.exports = (robot) ->
 
         if res.team.members.length == 0
           return response.reply "\"#{res.team.name}\" is an empty team."
-
+          
         if res.team.members.length == 1 and res.team.members[0].id == response.message.user.id
-          return response.reply "You are the only member of \"#{res.team.name}\""
+          motto = if res.team.motto is null then "and you have not yet set your motto!" else "and your motto is: #{res.team.motto}"
+          return response.reply "You are the only member of \"#{res.team.name}\" #{motto}"
 
         memberList = res.team.members.map((member) => member.name)
-
         noun = if res.team.members.length == 1 then 'member' else 'members'
+        motto = if res.team.motto is null then "They don't yet have a motto!" else "They say: #{res.team.motto}"
 
-        response.reply "\"#{res.team.name}\" has #{res.team.members.length} #{noun}: #{memberList.join(', ')}"
+        response.reply "\"#{res.team.name}\" has #{res.team.members.length} #{noun}: #{memberList.join(', ')}\r\n#{motto}"
       .catch (err) ->
+        console.log("ERROR: " + err)
         response.reply 'I\'m sorry Sir, there appears to be a big problem!'
 
 
@@ -157,22 +161,23 @@ module.exports = (robot) ->
     userId = response.message.user.id
     userName = response.message.user.name
     motto = response.match[1]
+    
     robot.hack24client.getUser(userId)
       .then (res) ->
 
-        if !res.ok or res.user.team.id is undefined
-          return response.reply 'You\'re not in a team! :goberserk:'
+        if (!res.ok and res.statusCode is 404) or res.user.team is null
+          return response.reply "You're not in a team! :goberserk:"
 
         email_address = robot.brain.data.users[userId].email_address
 
-        robot.hack24client.updateMotto(motto, res.user.team.id, userId, email_address)
-          .then (_res) ->
-            if _res.ok
-              reply = "So it is! As #{_res.team.name} say: #{_res.team.motto}!"
-              return response.reply reply
-
-            if _res.statusCode is 403
-              return response.reply "Sorry, only team members can change the motto."
+        robot.hack24client.updateMotto(motto, res.user.team.id, email_address)
+          .then (updateMottoResponse) ->
+            if updateMottoResponse.ok
+              return response.reply "So it is! As #{res.user.team.name} say: #{motto}"
+            
+            if updateMottoResponse.statusCode is 403
+              return response.reply 'Sorry, only team members can change the motto.'
+              
             response.reply "Sorry, I tried, but something went wrong."
 
       .catch (err) ->
@@ -200,6 +205,9 @@ module.exports = (robot) ->
         addUserToTeam = (teamId, otherUserId, emailAddress) => 
           robot.hack24client.addUserToTeam(teamId, otherUserId, emailAddress)
             .then (res) ->
+              if res.statusCode is 400
+                return response.reply "Sorry, #{otherUsername} is already in another team and must leave that team first."
+                
               if res.statusCode is 403
                 return response.reply "Sorry, you don't have permission to add people to your team."
                 
@@ -223,11 +231,14 @@ module.exports = (robot) ->
 
     robot.hack24client.getUser(userId)
       .then (res) ->
-        memberList = res.user.team.members.map((member) => member.name)
-        
-        noun = if res.user.team.members.length == 1 then 'member' else 'members'
+        if (!res.ok and res.statusCode is 404) or res.user.team is null
+          return response.reply "You're not in a team! :goberserk:"
 
-        response.reply "\"#{res.user.team.name}\" has #{res.user.team.members.length} #{noun}: #{memberList.join(', ')}" 
+        memberList = res.user.team.members.map((member) => member.name)
+        noun = if res.user.team.members.length == 1 then 'member' else 'members'
+        motto = if res.user.team.motto is null then "They don't yet have a motto!" else "They say: #{res.user.team.motto}"
+
+        response.reply "\"#{res.user.team.name}\" has #{res.user.team.members.length} #{noun}: #{memberList.join(', ')}\r\n#{motto}" 
       .catch (err) ->
         console.log("ERROR: " + err)
         response.reply 'I\'m sorry Sir, there appears to be a big problem!'

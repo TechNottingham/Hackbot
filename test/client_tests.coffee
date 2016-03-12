@@ -178,7 +178,7 @@ describe 'Hack24 API Client', ->
 
   describe '#getUser', ->
 
-    describe 'when user exists', ->
+    describe 'when user exists and in a team', ->
   
       before (done) ->
         process.env.HACK24API_URL = 'http://localhost:12345'
@@ -263,6 +263,55 @@ describe 'Hack24 API Client', ->
           expect(@result.user.team.members[0].name).to.equal(@userName)
           expect(@result.user.team.members[1].id).to.equal(@otherUserId)
           expect(@result.user.team.members[1].name).to.equal(@otherUserName)
+
+    describe 'when user exists and not in a team', ->
+  
+      before (done) ->
+        process.env.HACK24API_URL = 'http://localhost:12345'
+        
+        api = express()
+        
+        @userId = 'U12345'
+        @userName = 'Barry'
+        
+        api.get "/users/#{@userId}", (req, res) =>
+          @accept = req.headers['accept']
+          res.status(200).send
+            data:
+              type: 'users'
+              id: @userId
+              attributes:
+                name: @userName
+              relationships:
+                team:
+                  data: null
+        
+        client = new Client
+        
+        @server = api.listen 12345, (err) =>
+          client.getUser(@userId)
+            .then (@result) =>
+              done()
+            .catch done
+      
+      after (done) ->
+        @server.close done
+
+      it 'should resolve with status code 200 OK', ->
+          expect(@result.statusCode).to.equal(200)
+
+      it 'should resolve with OK', ->
+          expect(@result.ok).to.be.true
+
+      it 'should request with accept application/vnd.api+json', ->
+          expect(@accept).to.equal('application/vnd.api+json')
+
+      it 'should return the expected user', ->
+          expect(@result.user.id).to.equal(@userId)
+          expect(@result.user.name).to.equal(@userName)
+
+      it 'should return a null team', ->
+          expect(@result.user.team).to.equal(null)
 
     describe 'when user does not exist', ->
   
@@ -768,6 +817,7 @@ describe 'Hack24 API Client', ->
         
         @userId = 'U12345'
         @userName = 'Pineapple Dicxpress'
+        @teamId = 'fruity'
         email_address = 'lkjasdkljasd@gfhjdgf.daskjd'
         
         @expectedAuth = "Basic #{new Buffer("#{email_address}:#{pass}").toString('base64')}"
@@ -777,7 +827,7 @@ describe 'Hack24 API Client', ->
           @accept = req.headers['accept']
           @authorization = req.headers['authorization']
           @body = req.body
-          @teamId = req.params.teamId
+          @teamIdParam = req.params.teamId
           res.status(201).send()
         
         client = new Client
@@ -806,6 +856,9 @@ describe 'Hack24 API Client', ->
       it 'should request with the expected authorization', ->
         expect(@authorization).to.equal(@expectedAuth)
 
+      it 'should request with the expected team ID', ->
+        expect(@teamIdParam).to.equal(@teamId)
+
       it 'should request to create the expected user', ->
         expect(@body.data[0].type).to.equal('users')
         expect(@body.data[0].id).to.equal(@userId)
@@ -824,6 +877,119 @@ describe 'Hack24 API Client', ->
         
         @server = api.listen 12345, (err) =>
           client.addUserToTeam('some team', 'some user', 'some email') 
+            .then ->
+              done(new Error 'Promise resolved')
+            .catch (@err) =>
+              done()
+      
+      after (done) ->
+        @server.close done
+
+      it 'should reject with an error', ->
+        expect(@err.message).to.equal('socket hang up')
+
+
+  describe '#updateMotto', ->
+    
+    describe 'when team exists', ->
+      
+      before (done) ->
+        process.env.HACK24API_URL = 'http://localhost:12345'
+        pass = process.env.HACKBOT_PASSWORD = 'slkjfsjkfjks'
+        
+        api = express()
+        
+        @motto = 'No TV and no beer make Homer something something'
+        @teamId = 'duff'
+        email_address = 'lkjasdkljasd@gfhjdgf.daskjd'
+        
+        @expectedAuth = "Basic #{new Buffer("#{email_address}:#{pass}").toString('base64')}"
+        
+        api.patch '/teams/:teamId', apiJsonParser, (req, res) =>
+          @contentType = req.headers['content-type']
+          @accept = req.headers['accept']
+          @authorization = req.headers['authorization']
+          @body = req.body
+          @teamIdParam = req.params.teamId
+          res.status(204).send()
+        
+        client = new Client
+        
+        @server = api.listen 12345, (err) =>
+          client.updateMotto(@motto, @teamId, email_address)
+            .then (@result) =>
+              done()
+            .catch done
+      
+      after (done) ->
+        @server.close done
+
+      it 'should resolve with status code 204 No Content', ->
+        expect(@result.statusCode).to.equal(204)
+
+      it 'should resolve with OK', ->
+        expect(@result.ok).to.be.true
+
+      it 'should request with accept application/vnd.api+json', ->
+        expect(@accept).to.equal('application/vnd.api+json')
+
+      it 'should request with content-type application/vnd.api+json', ->
+        expect(@contentType).to.equal('application/vnd.api+json')
+
+      it 'should request with the expected authorization', ->
+        expect(@authorization).to.equal(@expectedAuth)
+
+      it 'should request with the expected team ID', ->
+        expect(@teamIdParam).to.equal(@teamId)
+
+      it 'should request to update the expected team', ->
+        expect(@body.data.type).to.equal('teams')
+        expect(@body.data.id).to.equal(@teamId)
+    
+    describe 'when team not found', ->
+      
+      before (done) ->
+        process.env.HACK24API_URL = 'http://localhost:12345'
+        pass = process.env.HACKBOT_PASSWORD = 'slkjfsjkfjks'
+        
+        api = express()
+        
+        email_address = 'lkjasdkljasd@gfhjdgf.daskjd'
+        
+        api.patch '/teams/:teamId', apiJsonParser, (req, res) =>
+          res.status(404).send()
+        
+        client = new Client
+        
+        @server = api.listen 12345, (err) =>
+          client.updateMotto('chips', 'fish', 'alkjdajh@sfdsdf.co.uk')
+            .then (@result) =>
+              done()
+            .catch done
+      
+      after (done) ->
+        @server.close done
+
+      it 'should resolve with status code 404 Not Found', ->
+        expect(@result.statusCode).to.equal(404)
+
+      it 'should resolve with not OK', ->
+        expect(@result.ok).to.be.false
+
+    describe 'when request errors', ->
+  
+      before (done) ->
+        process.env.HACK24API_URL = 'http://localhost:12345'
+        
+        api = express()
+        
+        api.use (req, res) ->
+          res.socket.destroy()
+
+        client = new Client
+        
+        @server = api.listen 12345, (err) =>
+          client.updateMotto('some motto', 'some team id', 'some email address')
             .then ->
               done(new Error 'Promise resolved')
             .catch (@err) =>

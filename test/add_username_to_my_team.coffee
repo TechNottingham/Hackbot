@@ -202,3 +202,52 @@ describe '@hubot add @username to my team', ->
     
     after ->
       @room.destroy()
+
+  describe 'when other user already in a team', ->
+  
+    before (done) ->
+      @room = helper.createRoom()
+      
+      @userId = 'micah'
+      @userEmail = 'micah.micah~micah'
+      @otherUserId = 'polly'
+      @otherUserUsername = 'pollygrafanaasa'
+      @existingTeamId = 'ocean-mongrels'
+      @existingTeamName = 'Ocean Mongrels'
+      
+      @getUserStub = sinon.stub()
+      @getUserStub.withArgs(@userId).returns Promise.resolve
+        ok: true
+        user:
+          team:
+            id: @existingTeamId
+            name: @existingTeamName
+            
+      @getUserStub.withArgs(@otherUserId).returns Promise.resolve
+        ok: true
+        statusCode: 200
+      
+      @addUserToTeamStub = sinon.stub().returns Promise.resolve
+        ok: false
+        statusCode: 400
+
+      @room.robot.hack24client =
+        getUser: @getUserStub
+        addUserToTeam: @addUserToTeamStub
+        
+      @room.robot.brain.data.users[@userId] =
+        email_address: @userEmail
+      @room.robot.brain.data.users[@otherUserId] =
+        id: @otherUserId
+        name: @otherUserUsername
+      
+      @room.user.say(@userId, "@hubot add @#{@otherUserUsername} to my team").then done
+
+    it 'should tell the user that the other user may already be in a team', ->
+      expect(@room.messages).to.eql [
+        [@userId, "@hubot add @#{@otherUserUsername} to my team"],
+        ['hubot', "@#{@userId} Sorry, #{@otherUserUsername} is already in another team and must leave that team first."]
+      ]
+    
+    after ->
+      @room.destroy()

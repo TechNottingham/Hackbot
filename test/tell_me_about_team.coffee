@@ -8,100 +8,139 @@ helper = new Helper('../scripts/hack24api.coffee')
 
 describe '@hubot tell me about team X', ->
 
-  describe 'when team exists with members', ->
+  describe 'when team exists with members and a motto', ->
   
     before (done) ->
       @room = helper.createRoom()
+      
+      @userId = 'jerry'
+      @teamId = 'my-crazy-team-name'
+      @teamName = 'My Crazy Team Name'
+      @firstTeamMember = 'Jerry'
+      @secondTeamMember = 'Bob'
+      @motto = 'Pikes and spikes hurt on bikes'
         
       @getTeamStub = sinon.stub().returns Promise.resolve
         ok: true
         team:
-          id: 'my-crazy-team-name'
-          name: 'My Crazy Team Name'
+          id: @teamId
+          name: @teamName
+          motto: @motto
           members: [{
-            id: 'user1'
-            name: 'John'
+            name: @firstTeamMember
           },{
-            id: 'user2'
-            name: 'Barry'
+            name: @secondTeamMember
           }]
       
       @room.robot.hack24client =
         getTeam: @getTeamStub
       
-      @room.user.say('sarah', '@hubot tell me about team     My Crazy team name         ').then done
+      @room.user.say(@userId, "@hubot tell me about team     #{@teamName}         ").then done
 
     it 'should fetch the team by slug (teamid)', ->
-      expect(@getTeamStub).to.have.been.calledWith('my-crazy-team-name')
+      expect(@getTeamStub).to.have.been.calledWith(@teamId)
 
     it 'should tell the user the team information', ->
       expect(@room.messages).to.eql [
-        ['sarah', '@hubot tell me about team     My Crazy team name         '],
-        ['hubot', '@sarah "My Crazy Team Name" has 2 members: John, Barry']
+        [@userId, "@hubot tell me about team     #{@teamName}         "],
+        ['hubot', "@#{@userId} \"#{@teamName}\" has 2 members: #{@firstTeamMember}, #{@secondTeamMember}\r\nThey say: #{@motto}"]
       ]
     
     after ->
       @room.destroy()
 
-  describe 'when team exists with one member', ->
+  describe 'when team exists with one member and no motto', ->
   
     before (done) ->
       @room = helper.createRoom()
+      
+      @userId = 'megan'
+      @teamName = 'My Crazy Team Name'
+      @teamMember = 'John'
         
       @getTeamStub = sinon.stub().returns Promise.resolve
         ok: true
         team:
-          id: 'my-crazy-team-name'
           name: 'My Crazy Team Name'
+          motto: null
           members: [{
-            id: 'user1'
-            name: 'John'
+            name: @teamMember
           }]
       
       @room.robot.hack24client =
         getTeam: @getTeamStub
       
-      @room.user.say('sarah', '@hubot tell me about team     my crazy team name         ').then done
-
-    it 'should fetch the team by slug (teamid)', ->
-      expect(@getTeamStub).to.have.been.calledWith('my-crazy-team-name')
+      @room.user.say(@userId, "@hubot tell me about team     #{@teamName}         ").then done
 
     it 'should tell the user the team information', ->
       expect(@room.messages).to.eql [
-        ['sarah', '@hubot tell me about team     my crazy team name         '],
-        ['hubot', '@sarah "My Crazy Team Name" has 1 member: John']
+        [@userId, "@hubot tell me about team     #{@teamName}         "],
+        ['hubot', "@#{@userId} \"#{@teamName}\" has 1 member: #{@teamMember}\r\nThey don't yet have a motto!"]
       ]
     
     after ->
       @room.destroy()
 
-  describe 'when team exists with the user as the only member', ->
+  describe 'when team exists with the user as the only member and a motto', ->
   
     before (done) ->
       @room = helper.createRoom()
+      
+      @userId = 'frank'
+      @teamName = 'My Crazy Team Name'
+      @motto = 'Hipsters, everywhere!'
         
       @getTeamStub = sinon.stub().returns Promise.resolve
         ok: true
         team:
-          id: 'my-crazy-team-name'
-          name: 'My Crazy Team Name'
+          name: @teamName
+          motto: @motto
           members: [{
-            id: 'sarah'
-            name: 'Sarah'
+            id: @userId
+            name: @userId
           }]
       
       @room.robot.hack24client =
         getTeam: @getTeamStub
       
-      @room.user.say('sarah', '@hubot tell me about team     my crazy team name         ').then done
-
-    it 'should fetch the team by slug (teamid)', ->
-      expect(@getTeamStub).to.have.been.calledWith('my-crazy-team-name')
+      @room.user.say(@userId, "@hubot tell me about team     #{@teamName}         ").then done
 
     it 'should tell the user the team information', ->
       expect(@room.messages).to.eql [
-        ['sarah', '@hubot tell me about team     my crazy team name         '],
-        ['hubot', '@sarah You are the only member of "My Crazy Team Name"']
+        [@userId, "@hubot tell me about team     #{@teamName}         "],
+        ['hubot', "@#{@userId} You are the only member of \"#{@teamName}\" and your motto is: #{@motto}"]
+      ]
+    
+    after ->
+      @room.destroy()
+
+  describe 'when team exists with the user as the only member and no motto', ->
+  
+    before (done) ->
+      @room = helper.createRoom()
+      
+      @userId = 'frank'
+      @teamName = 'My Crazy Team Name'
+        
+      @getTeamStub = sinon.stub().returns Promise.resolve
+        ok: true
+        team:
+          name: @teamName
+          motto: null
+          members: [{
+            id: @userId
+            name: @userId
+          }]
+      
+      @room.robot.hack24client =
+        getTeam: @getTeamStub
+      
+      @room.user.say(@userId, "@hubot tell me about team     #{@teamName}         ").then done
+
+    it 'should tell the user the team information', ->
+      expect(@room.messages).to.eql [
+        [@userId, "@hubot tell me about team     #{@teamName}         "],
+        ['hubot', "@#{@userId} You are the only member of \"#{@teamName}\" and you have not yet set your motto!"]
       ]
     
     after ->
