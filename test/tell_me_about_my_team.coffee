@@ -8,7 +8,7 @@ helper = new Helper('../scripts/hack24api.coffee')
 
 describe '@hubot tell me about my team', ->
 
-  describe 'when in a team', ->
+  describe 'when in a team with a motto', ->
   
     before (done) ->
       @room = helper.createRoom()
@@ -18,6 +18,7 @@ describe '@hubot tell me about my team', ->
       @firstTeamMember = 'Jerry'
       @secondTeamMember = 'Bob'
       @thirdTeamMember = 'Perry'
+      @motto = 'Pikes and spikes hurt on bikes'
         
       @getUserStub = sinon.stub().returns Promise.resolve
         ok: true
@@ -25,6 +26,7 @@ describe '@hubot tell me about my team', ->
           id: @userId
           team:
             name: @teamName
+            motto: @motto
             members: [{
               name: @firstTeamMember
             },{
@@ -44,7 +46,50 @@ describe '@hubot tell me about my team', ->
     it 'should tell the user the team information', ->
       expect(@room.messages).to.eql [
         [@userId, "@hubot tell me about my team"],
-        ['hubot', "@#{@userId} \"#{@teamName}\" has 3 members: #{@firstTeamMember}, #{@secondTeamMember}, #{@thirdTeamMember}"]
+        ['hubot', "@#{@userId} \"#{@teamName}\" has 3 members: #{@firstTeamMember}, #{@secondTeamMember}, #{@thirdTeamMember}\r\nThey say: #{@motto}"]
+      ]
+    
+    after ->
+      @room.destroy()
+
+  describe 'when in a team without a motto', ->
+  
+    before (done) ->
+      @room = helper.createRoom()
+      
+      @userId = 'jerry'
+      @teamName = 'Pointy Wizards'
+      @firstTeamMember = 'Jerry'
+      @secondTeamMember = 'Bob'
+      @thirdTeamMember = 'Perry'
+        
+      @getUserStub = sinon.stub().returns Promise.resolve
+        ok: true
+        user:
+          id: @userId
+          team:
+            name: @teamName
+            motto: null
+            members: [{
+              name: @firstTeamMember
+            },{
+              name: @secondTeamMember
+            },{
+              name: @thirdTeamMember
+            }]
+      
+      @room.robot.hack24client =
+        getUser: @getUserStub
+      
+      @room.user.say(@userId, "@hubot tell me about my team").then done
+
+    it 'should fetch the user', ->
+      expect(@getUserStub).to.have.been.calledWith(@userId)
+
+    it 'should tell the user the team information', ->
+      expect(@room.messages).to.eql [
+        [@userId, "@hubot tell me about my team"],
+        ['hubot', "@#{@userId} \"#{@teamName}\" has 3 members: #{@firstTeamMember}, #{@secondTeamMember}, #{@thirdTeamMember}\r\nThey don't yet have a motto!"]
       ]
     
     after ->

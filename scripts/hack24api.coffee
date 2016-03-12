@@ -228,10 +228,10 @@ module.exports = (robot) ->
           return response.reply "You're not in a team! :goberserk:"
 
         memberList = res.user.team.members.map((member) => member.name)
-        
         noun = if res.user.team.members.length == 1 then 'member' else 'members'
+        motto = if res.user.team.motto is null then "They don't yet have a motto!" else "They say: #{res.user.team.motto}"
 
-        response.reply "\"#{res.user.team.name}\" has #{res.user.team.members.length} #{noun}: #{memberList.join(', ')}" 
+        response.reply "\"#{res.user.team.name}\" has #{res.user.team.members.length} #{noun}: #{memberList.join(', ')}\r\n#{motto}" 
       .catch (err) ->
         console.log("ERROR: " + err)
         response.reply 'I\'m sorry Sir, there appears to be a big problem!'
