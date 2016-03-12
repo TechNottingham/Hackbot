@@ -205,6 +205,9 @@ module.exports = (robot) ->
         addUserToTeam = (teamId, otherUserId, emailAddress) => 
           robot.hack24client.addUserToTeam(teamId, otherUserId, emailAddress)
             .then (res) ->
+              if res.statusCode is 400
+                return response.reply "Sorry, #{otherUsername} is already in another team and must leave that team first."
+                
               if res.statusCode is 403
                 return response.reply "Sorry, you don't have permission to add people to your team."
                 
