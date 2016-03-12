@@ -161,10 +161,12 @@ class Client
             
           resolve(result)
 
-  updateMotto: (teamMotto, teamId, userId, emailAddress) ->
+  updateMotto: (teamMotto, teamId, emailAddress) ->
     new Promise (resolve, reject) =>
       body = JSON.stringify
         data:
+          type: 'teams'
+          id: teamId
           attributes:
             motto: teamMotto
 
@@ -175,7 +177,7 @@ class Client
           if err? then return reject err
 
           resolve
-            ok: res.statusCode == 200
+            ok: res.statusCode >= 200 && res.statusCode < 300
             statusCode: res.statusCode
 
 module.exports.Client = Client

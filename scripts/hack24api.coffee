@@ -157,22 +157,23 @@ module.exports = (robot) ->
     userId = response.message.user.id
     userName = response.message.user.name
     motto = response.match[1]
+    
     robot.hack24client.getUser(userId)
       .then (res) ->
 
-        if !res.ok or res.user.team.id is undefined
-          return response.reply 'You\'re not in a team! :goberserk:'
+        if (!res.ok and res.statusCode is 404) or res.user.team is null
+          return response.reply "You're not in a team! :goberserk:"
 
         email_address = robot.brain.data.users[userId].email_address
 
-        robot.hack24client.updateMotto(motto, res.user.team.id, userId, email_address)
-          .then (_res) ->
-            if _res.ok
-              reply = "So it is! As #{_res.team.name} say: #{_res.team.motto}!"
-              return response.reply reply
-
-            if _res.statusCode is 403
-              return response.reply "Sorry, only team members can change the motto."
+        robot.hack24client.updateMotto(motto, res.user.team.id, email_address)
+          .then (updateMottoResponse) ->
+            if updateMottoResponse.ok
+              return response.reply "So it is! As #{res.user.team.name} say: #{motto}"
+            
+            if updateMottoResponse.statusCode is 403
+              return response.reply 'Sorry, only team members can change the motto.'
+              
             response.reply "Sorry, I tried, but something went wrong."
 
       .catch (err) ->
@@ -223,6 +224,9 @@ module.exports = (robot) ->
 
     robot.hack24client.getUser(userId)
       .then (res) ->
+        if (!res.ok and res.statusCode is 404) or res.user.team is null
+          return response.reply "You're not in a team! :goberserk:"
+
         memberList = res.user.team.members.map((member) => member.name)
         
         noun = if res.user.team.members.length == 1 then 'member' else 'members'
