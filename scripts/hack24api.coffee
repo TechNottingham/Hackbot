@@ -42,6 +42,7 @@ module.exports = (robot) ->
   robot.respond /my id/i, (response) ->
     response.reply "Your id is #{response.message.user.id}"
 
+
   robot.respond /create team (.*)/i, (response) ->
     userId = response.message.user.id
     userName = response.message.user.name
@@ -91,6 +92,7 @@ module.exports = (robot) ->
     .catch (err) ->
         response.reply 'I\'m sorry Sir, there appears to be a big problem!'
 
+
   robot.respond /tell me about team (.*)/i, (response) ->
     teamId = slugify(response.match[1])
 
@@ -101,16 +103,18 @@ module.exports = (robot) ->
 
         if res.team.members.length == 0
           return response.reply "\"#{res.team.name}\" is an empty team."
-
+          
         if res.team.members.length == 1 and res.team.members[0].id == response.message.user.id
-          return response.reply "You are the only member of \"#{res.team.name}\""
+          motto = if res.team.motto is null then "and you have not yet set your motto!" else "and your motto is: #{res.team.motto}"
+          return response.reply "You are the only member of \"#{res.team.name}\" #{motto}"
 
         memberList = res.team.members.map((member) => member.name)
-
         noun = if res.team.members.length == 1 then 'member' else 'members'
+        motto = if res.team.motto is null then "They don't yet have a motto!" else "They say: #{res.team.motto}"
 
-        response.reply "\"#{res.team.name}\" has #{res.team.members.length} #{noun}: #{memberList.join(', ')}"
+        response.reply "\"#{res.team.name}\" has #{res.team.members.length} #{noun}: #{memberList.join(', ')}\r\n#{motto}"
       .catch (err) ->
+        console.log("ERROR: " + err)
         response.reply 'I\'m sorry Sir, there appears to be a big problem!'
 
 
