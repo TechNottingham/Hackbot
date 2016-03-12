@@ -1,0 +1,6 @@
+#!/bin/bash
+
+export HACK24API_URL=http://localhost:5000
+export HACKBOT_PASSWORD=h4c6b07
+
+./bin/hubot

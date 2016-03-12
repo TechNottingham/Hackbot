@@ -81,7 +81,7 @@ describe '@hubot create team X', ->
     after ->
       @room.destroy()
 
-    it 'should welcome the user to the team', ->
+    it 'should not welcome the user to the team', ->
       expect(@room.messages).to.eql [
         [@userId, "@hubot create team #{@teamName}"],
         ['hubot', "@#{@userId} Sorry, you don't have permission to create a team."]

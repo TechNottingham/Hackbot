@@ -152,6 +152,7 @@ module.exports = (robot) ->
       .catch (err) ->
         response.reply 'I\'m sorry Sir, there appears to be a big problem!'
 
+
   robot.respond /our motto is (.*)/i, (response) ->
     userId = response.message.user.id
     userName = response.message.user.name
@@ -174,6 +175,59 @@ module.exports = (robot) ->
               return response.reply "Sorry, only team members can change the motto."
             response.reply "Sorry, I tried, but something went wrong."
 
+      .catch (err) ->
+        console.log("ERROR: " + err)
+        response.reply 'I\'m sorry Sir, there appears to be a big problem!'
+
+        
+  robot.respond /add @(.+) to my team/, (response) ->
+    otherUsername = response.match[1]
+    userId = response.message.user.id
+      
+    robot.hack24client.getUser(userId)
+      .then (res) ->
+        if res.user.team == null
+          return response.reply "I would, but you're not in a team..."
+        
+        teamId = res.user.team.id
+        
+        otherUser = {}
+        for _, user of robot.brain.data.users
+          if user.name == otherUsername
+            otherUser = user
+            break
+        
+        addUserToTeam = (teamId, otherUserId, emailAddress) => 
+          robot.hack24client.addUserToTeam(teamId, otherUserId, emailAddress)
+            .then (res) ->
+              if res.statusCode is 403
+                return response.reply "Sorry, you don't have permission to add people to your team."
+                
+              response.reply 'Done!'
+
+        emailAddress = robot.brain.data.users[userId].email_address
+        
+        return robot.hack24client.getUser(otherUser.id)
+          .then (res) =>          
+            if res.ok
+              return addUserToTeam teamId, otherUser.id, emailAddress
+
+            if res.statusCode is 404
+              robot.hack24client.createUser(otherUser.id, otherUser.name, emailAddress)
+                .then (res) ->
+                  return addUserToTeam teamId, otherUser.id, emailAddress
+
+
+  robot.respond /tell me about my team/i, (response) ->
+    userId = response.message.user.id
+
+    robot.hack24client.getUser(userId)
+      .then (res) ->
+        memberList = res.user.team.members.map((member) => member.name)
+        
+        noun = if res.user.team.members.length == 1 then 'member' else 'members'
+
+        response.reply "\"#{res.user.team.name}\" has #{res.user.team.members.length} #{noun}: #{memberList.join(', ')}" 
       .catch (err) ->
         console.log("ERROR: " + err)
         response.reply 'I\'m sorry Sir, there appears to be a big problem!'

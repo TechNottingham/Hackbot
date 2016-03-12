@@ -140,6 +140,26 @@ class Client
             result.teams = store.sync JSON.parse(body)
 
           resolve(result)
+          
+  addUserToTeam: (teamId, userId, emailAddress) ->
+    new Promise (resolve, reject) =>
+      body = JSON.stringify 
+        data: [{
+          type: 'users'
+          id: userId
+        }]
+        
+      @httpClient("#{process.env.HACK24API_URL}/teams/#{teamId}/members", { auth: getAuth(emailAddress) })
+        .header('Accept', 'application/vnd.api+json')
+        .header('Content-Type', 'application/vnd.api+json')
+        .post(body) (err, res, body) ->
+          if err? then return reject err
+
+          result =
+            ok: true
+            statusCode: res.statusCode
+            
+          resolve(result)
 
   updateMotto: (teamMotto, teamId, userId, emailAddress) ->
     new Promise (resolve, reject) =>
