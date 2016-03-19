@@ -1,7 +1,6 @@
 [
   "hubot-auth",
   "hubot-diagnostics",
-  "hubot-google-images",
   "hubot-google-translate",
   "hubot-hackbot",
   "hubot-help",
