@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "author": "Andrew Seward <abseward@googlemail.com>",
+  "contributors": [
+    "David Wood <david.p.wood@gmail.com> (http://codesleuth.co.uk/)"
+  ],
   "description": "Hackbot is here to help you hack",
   "scripts": {
     "test": "echo \"No tests specified; skipping...\" && exit 0"
