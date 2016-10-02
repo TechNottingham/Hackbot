@@ -16,7 +16,7 @@
     "hubot-diagnostics": "0.0.1",
     "hubot-google-images": "^0.2.6",
     "hubot-google-translate": "^0.2.0",
-    "hubot-hackbot": "0.0.9-4",
+    "hubot-hackbot": "^0.3.0",
     "hubot-help": "^0.2.0",
     "hubot-heroku-keepalive": "^1.0.2",
     "hubot-maps": "0.0.2",
@@ -25,9 +25,9 @@
     "hubot-rules": "^0.1.1",
     "hubot-scripts": "^2.17.2",
     "hubot-shipit": "^0.2.0",
-    "hubot-slack": "^4.0.2"
+    "hubot-slack": "^4.1.0"
   },
   "engines": {
-    "node": "5.4.x"
+    "node": "6.7"
   }
 }
