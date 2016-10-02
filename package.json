@@ -16,7 +16,7 @@
     "hubot-diagnostics": "0.0.1",
     "hubot-google-images": "^0.2.6",
     "hubot-google-translate": "^0.2.0",
-    "hubot-hackbot": "^0.1.3-4",
+    "hubot-hackbot": "^0.1.3-5",
     "hubot-help": "^0.2.0",
     "hubot-heroku-keepalive": "^1.0.2",
     "hubot-maps": "0.0.2",
