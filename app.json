@@ -1,0 +1,25 @@
+{
+    "name": "Hackbot",
+    "description": "A bot for hacking",
+    "repository": "https://github.com/TechNottingham/Hackbot",
+    "keywords": ["node", "hubot"],
+    "env": {
+        "HACKBOT_API_PASSWORD": {
+            "description": "Hackbot API password"
+        },
+        "HACKBOT_API_URL": {
+            "description": "Hackbot API URL"
+        },
+        "HUBOT_SLACK_TOKEN": {
+            "description": "Token for Slack"
+        }
+    },
+    "addons": [
+        "heroku-redis"
+    ],
+    "buildpacks": [
+        {
+            "url": "heroku/nodejs"
+        }
+    ]
+}
