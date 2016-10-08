@@ -12,6 +12,9 @@
         },
         "HUBOT_SLACK_TOKEN": {
             "description": "Token for Slack"
+        },
+        "HUBOT_HEROKU_KEEPALIVE_URL": {
+            "description": "URL to hit to keepalive (i.e. the URL of hackbot)"
         }
     },
     "addons": [
